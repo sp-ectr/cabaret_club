@@ -1,0 +1,36 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --animate-cabaretPulse: cabaretPulse 2.5s ease-in-out infinite;
+  --animate-logoGlow: logoGlow 4s ease-in-out infinite;
+
+  @keyframes cabaretPulse {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.12);
+      border-color: rgba(244, 63, 94, 0.35);
+    }
+
+    50% {
+      box-shadow:
+        0 0 30px rgba(244, 63, 94, 0.2),
+        0 0 60px rgba(244, 63, 94, 0.2);
+      border-color: rgba(244, 63, 94, 0.65);
+    }
+  }
+
+  @keyframes logoGlow {
+    0%, 100% {
+      filter:
+        drop-shadow(0 0 18px rgba(244, 63, 94, 0.12))
+        drop-shadow(0 0 30px rgba(0, 0, 0, 0.8));
+    }
+
+    50% {
+      filter:
+        drop-shadow(0 0 28px rgba(244, 63, 94, 0.5))
+        drop-shadow(0 0 50px rgba(168, 85, 247, 0.5))
+        drop-shadow(0 0 30px rgba(0, 0, 0, 0.8));
+    }
+  }
+}
