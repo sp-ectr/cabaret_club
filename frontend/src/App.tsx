@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import WebApp from "@twa-dev/sdk";
+import { useState } from "react";
 import logoImg from "./assets/logo.png";
 import { useIsPortrait } from "./hooks/useIsPortrait";
 import {
@@ -17,38 +16,16 @@ export default function App() {
   // Хук детектора ориентации
   const isPortrait = useIsPortrait();
 
-  // Ленивая инициализация языка
+  // Ленивая инициализация языка из локали браузера
   const getInitialLanguage = (): Language => {
-    try {
-      const tgLang = WebApp.initDataUnsafe?.user?.language_code;
-      if (tgLang === "ru" || tgLang === "be" || tgLang === "uk") {
-        return "ru";
-      }
-    } catch {
-      // Игнорируем запуск вне Telegram
+    const navLang = navigator.language?.slice(0, 2).toLowerCase();
+    if (navLang === "ru" || navLang === "be" || navLang === "uk") {
+      return "ru";
     }
     return "en";
   };
 
   const [lang, setLang] = useState<Language>(getInitialLanguage);
-
-  // Инициализация Telegram WebApp
-  useEffect(() => {
-    try {
-      if (typeof WebApp !== "undefined" && typeof WebApp.ready === "function") {
-        WebApp.ready();
-        WebApp.expand();
-        WebApp.setHeaderColor?.("#09050d");
-        WebApp.setBackgroundColor?.("#09050d");
-        // Отключаем вертикальные свайпы закрытия в Telegram, если поддерживается
-        if (WebApp.isVersionAtLeast?.("7.7")) {
-          WebApp.disableVerticalSwipes?.();
-        }
-      }
-    } catch (error) {
-      console.warn("Telegram context unavailable:", error);
-    }
-  }, []);
 
   const handleTapStart = () => {
     setScreen("VIDEO");

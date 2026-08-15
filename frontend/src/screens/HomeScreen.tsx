@@ -1,6 +1,5 @@
 // src/screens/HomeScreen.tsx
 import { useState } from "react";
-import WebApp from "@twa-dev/sdk";
 import { DICTIONARY, type Language } from "../utils/dictionary";
 import bgImg from "../assets/fon.png";
 import { 
@@ -23,13 +22,18 @@ interface HomeScreenProps {
   onExit: () => void;
 }
 
+// Мок профиля для веб-версии: реальный аккаунт подключим при возврате Telegram
+const MOCK_USER = {
+  username: "KIRYU_CHAN",
+  photoUrl: undefined as string | undefined,
+};
+
 export function HomeScreen({ lang, onOpenShift, onExit }: HomeScreenProps) {
   // Активный пункт меню
   const [activeTab, setActiveTab] = useState<TabType>("club");
 
-  // Данные юзера из Telegram SDK с надежным фоллбэком
-  const username = WebApp.initDataUnsafe?.user?.username || "sp.ectr";
-  const userPhoto = WebApp.initDataUnsafe?.user?.photo_url;
+  const username = MOCK_USER.username;
+  const userPhoto = MOCK_USER.photoUrl;
 
   // Моковые данные баланса под MVP
   const [playerStats] = useState({
