@@ -81,6 +81,8 @@ export interface GameTable {
   matchMultiplier: number;
   /** Бейдж последней посадки, живёт ~1.5 с, затем сбрасывается в null (5) */
   currentMatchFeedback: MatchFeedback | null;
+  /** Тики до исчезновения бейджа (движок гасит сам) */
+  badgeRemainingSec: number;
   /** Заработано столом за смену — посекундный стриминг (4) */
   servedYen: number;
 }
