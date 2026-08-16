@@ -37,7 +37,7 @@ export interface Hostess {
   name: string;
   rarity: HostessRarity;
   stats: HostessStats;
-  /** Текущий задор, 0..100 (§6) */
+  /** Текущий задор, 0..100 (6) */
   stamina: number;
   /** Стартовые трое — true; NIKA и LUNA открываются наймом (2) */
   hired: boolean;
@@ -53,8 +53,10 @@ export interface Guest {
   type: GuestType;
   /** Два видимых предпочтения (5), порядок отображения перемешан. Для BOMZH — null. */
   visibleStats: [StatType, StatType] | null;
-  /** Скрытые веса (5). Для BOMZH — null: его не обслуживают, а успокаивают (§7). */
+  /** Скрытые веса (5). Для BOMZH — null: его не обслуживают, а успокаивают (7). */
   hiddenWeights: PreferenceWeights | null;
+  /** Аватар гостя - индекс картинки 1..3 внутри класса; у бомжа одна картинка: 1 */
+  avatarKey: 1 | 2 | 3;
   /** Терпение в секундах в состоянии WAITING (4: ровно 10). Для BOMZH не используется. */
   patienceSec: number; // 10 сек по умолчанию
 }
