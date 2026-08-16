@@ -43,6 +43,19 @@ export const DICTIONARY: Record<
             kind: string;
         }>;
     };
+    hostessModal: {
+        title: string;
+        hire: string;
+        spa: string;
+        vacation: string;
+        staminaLabel: string;
+        ready: string;
+        tired: string;
+        tiredHint: string;
+        burnout: string;
+        burnoutHint: string;
+        stats: { talk: string; charisma: string; service: string };
+    };
     openClub: string;
     exit: string;
     demoBadge: string;
@@ -83,6 +96,19 @@ export const DICTIONARY: Record<
             ETIQUETTE: { name: "КУРСЫ ЭТИКЕТА", desc: "Расход задора за обслуживание 15 → 10", kind: "ПЕРСОНАЛ" },
         },
     },
+    hostessModal: {
+        title: "ХОСТЕС // РОСТЕР",
+        hire: "НАНЯТЬ",
+        spa: "СПА +30",
+        vacation: "VIP-ОТПУСК",
+        staminaLabel: "ЗАДОР",
+        ready: "ГОТОВА",
+        tired: "УСТАЛА",
+        tiredHint: "M × 0.8",
+        burnout: "ВЫГОРАНИЕ",
+        burnoutHint: "БЛОКИРОВКА",
+        stats: { talk: "РЕЧЬ", charisma: "ХАРИЗМА", service: "СЕРВИС" },
+    },
     openClub: "ОТКРЫТЬ КЛУБ",
     exit: "ВЫХОД",
     demoBadge: "MVP DEMO TEST • V0.1",
@@ -121,6 +147,19 @@ export const DICTIONARY: Record<
             PREMIUM_BAR: { name: "PREMIUM BAR", desc: "Tycoon bills ×2, but each tycoon service costs +2 stamina", kind: "ECONOMY" },
             ETIQUETTE: { name: "ETIQUETTE COURSE", desc: "Service stamina drain 15 → 10", kind: "STAFFING" },
         },
+    },
+    hostessModal: {
+        title: "HOSTESS // ROSTER",
+        hire: "HIRE",
+        spa: "SPA +30",
+        vacation: "VIP VACATION",
+        staminaLabel: "STAMINA",
+        ready: "READY",
+        tired: "TIRED",
+        tiredHint: "M × 0.8",
+        burnout: "BURNOUT",
+        burnoutHint: "BLOCKED",
+        stats: { talk: "TALK", charisma: "CHARISMA", service: "SERVICE" },
     },
     openClub: "OPEN CLUB",
     exit: "EXIT",
