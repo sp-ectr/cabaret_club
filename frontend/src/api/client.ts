@@ -1,9 +1,3 @@
-/// <reference types="vite/client" />
-// src/api/client.ts
-// Типизированный API-клиент по контракту docs/API.md.
-// VITE_USE_MOCK !== "false" (по умолчанию) - запросы идут в мок-сервер в памяти;
-// VITE_USE_MOCK === "false" - настоящий fetch на /api/... (твой FastAPI за nginx).
-
 import { createMockServer } from "./mockServer";
 import type {
   ClubTier,
@@ -17,7 +11,7 @@ import type {
   StatType,
 } from "../game/types";
 
-// ---------- Идентификация (10 раздел MANIFEST: в localStorage только guest_id) ----------
+// ---------- Идентификация ----------
 
 const GUEST_ID_KEY = "cabaret_guest_id";
 const TAB_ID_KEY = "cabaret_tab_id";
@@ -127,7 +121,6 @@ export type PermanentUpgradeId = "VIP_INTERIOR" | "PREMIUM_BAR" | "NEON_SIGN" | 
 
 // ---------- Мапперы snake_case <-> camelCase ----------
 
-// Ответы прилетают как неизвестный JSON - читаем через типизированные ассессоры
 type Json = Record<string, unknown>;
 const asNum = (v: unknown): number => v as number;
 const asStr = (v: unknown): string => v as string;
@@ -271,7 +264,6 @@ function fromShiftState(d: Json): ShiftState {
   };
 }
 
-// Экшен camel -> snake
 function toActionDto(action: ShiftAction): Json {
   switch (action.type) {
     case "GUEST_SPAWNED":
@@ -325,7 +317,7 @@ async function request<T>(path: string, method: "GET" | "POST", body?: unknown):
       if (err?.code) code = asStr(err.code);
       if (err?.message) message = asStr(err.message);
     } catch {
-      // тело не JSON - оставляем дефолт
+      // Игнорируем не-JSON ошибки
     }
     throw new ApiError(response.status, code, message);
   }
@@ -365,6 +357,10 @@ const mapPlayerHostesses = (d: Json): { player: PlayerState; hostesses: HostessS
 export const api = {
   initGame(): Promise<InitGameResponse> {
     return request<Json>("/api/game/init", "GET").then(mapInit);
+  },
+
+  resetGame(): Promise<InitGameResponse> {
+    return request<Json>("/api/game/reset", "POST", {}).then(mapInit);
   },
 
   async startShift(selectedHostessIds: HostessId[], hasBouncer: boolean): Promise<StartShiftResponse> {

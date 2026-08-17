@@ -1,6 +1,5 @@
 import { useState } from "react";
 import logoImg from "./assets/logo.png";
-import { useIsPortrait } from "./hooks/useIsPortrait";
 import {
   BRAND,
   DICTIONARY,
@@ -12,14 +11,11 @@ import { HomeScreen, type ShiftLaunch } from "./screens/HomeScreen";
 import { ShiftScreen } from "./screens/ShiftScreen";
 import { INITIAL_HOSTESSES } from "./game/config";
 import type { Hostess, ClubTier } from "./game/types";
-import type { ShiftContext } from "./game/shiftEngine"; // <-- Импорт из правильного файла!
+import type { ShiftContext } from "./game/shiftEngine";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("TAP");
   const [shiftLaunch, setShiftLaunch] = useState<ShiftLaunch | null>(null);
-
-  // Хук детектора ориентации экрана
-  const isPortrait = useIsPortrait();
 
   // Ленивая инициализация языка из браузера
   const getInitialLanguage = (): Language => {
@@ -121,23 +117,7 @@ export default function App() {
         paddingBottom: "max(8px, env(safe-area-inset-bottom))",
       }}
     >
-      {/* ================= 1. ЭКРАН-БЛОКИРОВЩИК ПОРТРЕТНОГО РЕЖИМА ================= */}
-      {isPortrait && (
-        <div className="absolute inset-0 z-50 bg-[#09050d]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-14 h-9 border-2 border-rose-500/70 rounded-xs mb-5 flex items-center justify-center animate-[spin_3s_ease-in-out_infinite]">
-            <div className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
-          </div>
-
-          <h3 className="text-sm font-black tracking-[0.2em] text-rose-400 mb-2 uppercase">
-            {DICTIONARY[lang].rotateTitle}
-          </h3>
-          <p className="text-[11px] font-mono text-rose-300/60 max-w-[260px] leading-relaxed">
-            {DICTIONARY[lang].rotateDesc}
-          </p>
-        </div>
-      )}
-
-      {/* ================= 2. ЭКРАН TAP (Старт) ================= */}
+      {/* ================= 1. ЭКРАН TAP (Старт) ================= */}
       {screen === "TAP" && (
         <main className="w-full max-w-[960px] h-full flex flex-row items-center justify-center px-4 sm:px-8 py-2 sm:py-4 relative overflow-hidden gap-6 sm:gap-12">
           {/* Неоновые фоновые пятна */}
@@ -208,14 +188,14 @@ export default function App() {
         </main>
       )}
 
-      {/* ================= 3. ЭКРАН ВИДЕО-ИНТРО ================= */}
+      {/* ================= 2. ЭКРАН ВИДЕО-ИНТРО ================= */}
       {screen === "VIDEO" && (
         <div className="w-full h-full flex items-center justify-center">
           <MemeIntro onComplete={() => setScreen("HOME")} lang={lang} />
         </div>
       )}
 
-      {/* ================= 4. ГЛАВНЫЙ ЭКРАН ХАБА ================= */}
+      {/* ================= 3. ГЛАВНЫЙ ЭКРАН ХАБА ================= */}
       {screen === "HOME" && (
         <HomeScreen
           lang={lang}
@@ -224,7 +204,7 @@ export default function App() {
         />
       )}
 
-      {/* ================= 5. БОЕВОЙ ЭКРАН СМЕНЫ ================= */}
+      {/* ================= 4. БОЕВОЙ ЭКРАН СМЕНЫ ================= */}
       {screen === "SHIFT" && shiftLaunch && (
         <ShiftScreen
           lang={lang}

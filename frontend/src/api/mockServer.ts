@@ -1,8 +1,4 @@
-// src/api/mockServer.ts
-// Мок-бэкенд в памяти: реализует все 9 эндпоинтов docs/API.md как настоящий
-// HTTP-слой (принимает fetch-запросы со snake_case JSON и отдаёт Response)
-// поэтому клиент работает с ним ровно как с реальным FastAPI
-// Часы инжектятся (по умолчанию unix-секунды) - тесты двигают время
+// Мок-бэкенд в памяти: реализует все эндпоинты docs/API.md (включая сброс /game/reset).
 
 import {
   BOMZH_PLACATE_STAMINA_DRAIN,
@@ -31,10 +27,9 @@ import type {
   UpgradeId,
 } from "../game/types";
 
-// Серверные константы из docs/API.md (в фронте им больше негде жить)
-
+// Серверные константы
 const GRACE_MIN_SEC = 285;
-const GRACE_MAX_SEC = 330; // оно же ORPHAN_TIMEOUT_SEC
+const GRACE_MAX_SEC = 330;
 const MAJIMA_START_SEC = 150;
 const MAJIMA_STAMINA_RESTORE = 20;
 const MAX_ACTIONS_PER_SECOND = 10;
@@ -47,8 +42,6 @@ const ALL_HOSTESS_IDS: HostessId[] = ["YUKI", "MIRA", "SAKURA", "NIKA", "LUNA"];
 
 const UUID_V4_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-
-// Входящие DTO (snake_case, зеркало контракта)
 
 interface GuestDto {
   id: string;
@@ -91,8 +84,6 @@ interface ReportDto {
   gross_yen?: number;
   vip_tips_yen?: number;
 }
-
-// Внутреннее состояние (camelCase, доменные типы)
 
 interface MockHostess {
   hired: boolean;
@@ -141,8 +132,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
   const players = new Map<string, MockPlayer>();
   const sessions = new Map<string, MockSession>();
   const completedShifts = new Map<string, CompleteResult>();
-
-  // Хелперы ----------
 
   const uuid = (): string => {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -193,7 +182,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
       (id) => player.hostesses[id].hired && getHostessStatus(player.hostesses[id].stamina) !== "BURNOUT"
     ).length;
 
-  // Пересчёт флагов после любых изменений (3.1 API.md)
   function recomputeFlags(player: MockPlayer): void {
     if (player.yen < 0) player.defeat = true;
     if (player.yen < ZERO_STAFF_BANKRUPTCY_THRESHOLD_YEN && availableCount(player) === 0) {
@@ -206,8 +194,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
     ALL_HOSTESS_IDS.filter(
       (id) => player.hostesses[id].hired && getHostessStatus(player.hostesses[id].stamina) === "READY"
     ).length;
-
-  // Мапперы
 
   const guestFromDto = (dto: GuestDto): Guest => ({
     id: dto.id,
@@ -290,11 +276,8 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
     etiquette: player.etiquette,
   });
 
-  // Логика смены
-
   const elapsedOf = (session: MockSession): number => now() - session.startedAt;
 
-  // Финализация смены: отчёт + транзакция игрока (5-й эндпоинт и orphan-resolver)
   function finalizeSession(
     guestId: string,
     player: MockPlayer,
@@ -313,7 +296,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
       clamped = true;
     }
 
-    // Деньги пересчитываем только по своим константам (3.5 API.md)
     const report = calcShiftReport({
       shiftId: session.shiftId,
       clubTier: session.tier,
@@ -331,7 +313,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
 
     player.yen += report.netYen;
 
-    // Стамина: серверная версия на конец смены + сон +20 всем нанятым
     for (const id of session.roster) {
       player.hostesses[id].stamina = Math.min(
         STAMINA_MAX,
@@ -362,8 +343,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
     defeat: player.defeat,
   });
 
-  // Обработчики
-
   async function handleGameInit(guestId: string): Promise<Response> {
     const player = getOrCreateTimePlayer(guestId);
     let autoClosed: Record<string, unknown> | null = null;
@@ -372,7 +351,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
     let activeShift: Record<string, unknown> | null = null;
     if (session) {
       if (elapsedOf(session) > GRACE_MAX_SEC) {
-        // Брошенная смена: досчитываем с полными расходами (3.1)
         const { report } = finalizeSession(guestId, player, session, null);
         autoClosed = reportToDto(report);
       } else {
@@ -418,7 +396,7 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
       if (elapsedOf(session) <= GRACE_MAX_SEC) {
         return fail(409, "SHIFT_ALREADY_ACTIVE", "смена уже идёт");
       }
-      finalizeSession(guestId, player, session, null); // просроченную закрываем молча
+      finalizeSession(guestId, player, session, null);
     }
 
     const selected = body.selected_hostess_ids ?? [];
@@ -435,7 +413,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
     const serverStamina = {} as Record<HostessId, number>;
     for (const id of roster) serverStamina[id] = player.hostesses[id].stamina;
 
-    // Начальные столы: стаггер 0/4/8 как COOLDOWN (3.2 API.md)
     const tables: GameTable[] = TABLE_STAGGER_SEC.map((stagger, idx) => ({
       id: (idx + 1) as 1 | 2 | 3,
       status: "COOLDOWN",
@@ -485,7 +462,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
     const elapsed = elapsedOf(session);
     if (elapsed > GRACE_MAX_SEC) return fail(400, "SHIFT_EXPIRED", "смена просрочена");
 
-    // Антифлуд: не больше 10 действий в секунду
     const t = now();
     session.actionTimes = session.actionTimes.filter((x) => t - x < 1);
     if (session.actionTimes.length >= MAX_ACTIONS_PER_SECOND) {
@@ -493,7 +469,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
     }
     session.actionTimes.push(t);
 
-    // Мадзима на 150-й секунде: +20 задора составу, один раз (3.3 API.md)
     if (!session.majimaApplied && elapsed >= MAJIMA_START_SEC) {
       session.majimaApplied = true;
       for (const id of session.roster) {
@@ -515,7 +490,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
           return fail(400, "STAFF_UNAVAILABLE", "хостес не в составе смены");
         }
         let cost = player.etiquette ? STAMINA_DRAIN_ETIQUETTE : STAMINA_DRAIN_NORMAL;
-        // тип гостя берём из снапшота: бонус бара только на богаче
         const tableDto = body.snapshot?.find((x) => x.id === action.table_id);
         if (player.premiumBar && tableDto?.guest?.type === "RICH") cost += STAMINA_BAR_EXTRA;
         if (session.serverStamina[hostessId] < cost) {
@@ -541,7 +515,7 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
         break;
       }
       case "GUEST_SPAWNED":
-        break; // снапшот уже несёт стол
+        break;
     }
 
     if (body.snapshot) session.snapshot = body.snapshot.map(tableFromDto);
@@ -566,7 +540,6 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
     guestId: string,
     body: { shift_id?: string; report?: ReportDto }
   ): Promise<Response> {
-    // Идемпотентность: повторный complete того же shift_id отдаёт сохранённый ответ
     if (body.shift_id && completedShifts.has(body.shift_id)) {
       const stored = completedShifts.get(body.shift_id)!;
       return ok(stored.body);
@@ -591,7 +564,7 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
 
   async function handleHire(guestId: string, body: { hostess_id?: string }): Promise<Response> {
     const player = getOrCreateTimePlayer(guestId);
-    if (player.defeat) return fail(400, "GAME_OVER", "игра завершена"); // победа магазин не блокирует - после демо песочница
+    if (player.defeat) return fail(400, "GAME_OVER", "игра завершена");
     if (sessions.get(guestId)) return fail(409, "SHIFT_ALREADY_ACTIVE", "идёт смена");
 
     const id = body.hostess_id as HostessId;
@@ -613,7 +586,7 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
     body: { hostess_id?: string; method?: "SPA" | "VIP_VACATION" }
   ): Promise<Response> {
     const player = getOrCreateTimePlayer(guestId);
-    if (player.defeat) return fail(400, "GAME_OVER", "игра завершена"); // победа магазин не блокирует - после демо песочница
+    if (player.defeat) return fail(400, "GAME_OVER", "игра завершена");
     if (sessions.get(guestId)) return fail(409, "SHIFT_ALREADY_ACTIVE", "идёт смена");
 
     const id = body.hostess_id as HostessId;
@@ -636,7 +609,7 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
 
   async function handleBuy(guestId: string, body: { upgrade_id?: string }): Promise<Response> {
     const player = getOrCreateTimePlayer(guestId);
-    if (player.defeat) return fail(400, "GAME_OVER", "игра завершена"); // победа магазин не блокирует - после демо песочница
+    if (player.defeat) return fail(400, "GAME_OVER", "игра завершена");
     if (sessions.get(guestId)) return fail(409, "SHIFT_ALREADY_ACTIVE", "идёт смена");
 
     const upgradeId = String(body.upgrade_id ?? "");
@@ -665,7 +638,7 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
 
   async function handleClubUpgrade(guestId: string): Promise<Response> {
     const player = getOrCreateTimePlayer(guestId);
-    if (player.defeat) return fail(400, "GAME_OVER", "игра завершена"); // победа магазин не блокирует - после демо песочница
+    if (player.defeat) return fail(400, "GAME_OVER", "игра завершена");
     if (sessions.get(guestId)) return fail(409, "SHIFT_ALREADY_ACTIVE", "идёт смена");
 
     if (player.clubTier >= 3) return fail(400, "TIER_MAXED", "максимальный уровень");
@@ -682,6 +655,11 @@ export function createMockServer(options?: { now?: () => number }): MockServer {
 
   async function route(method: string, path: string, guestId: string, body: Record<string, unknown> | null): Promise<Response> {
     if (method === "GET" && path === "/api/game/init") return handleGameInit(guestId);
+    if (method === "POST" && path === "/api/game/reset") {
+      players.delete(guestId);
+      sessions.delete(guestId);
+      return handleGameInit(guestId);
+    }
     if (method === "POST" && path === "/api/shift/start") return handleShiftStart(guestId, body as never);
     if (method === "POST" && path === "/api/shift/action") return handleShiftAction(guestId, body as never);
     if (method === "GET" && path === "/api/shift/state") return handleShiftState(guestId);

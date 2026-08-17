@@ -139,7 +139,6 @@ export function ShiftScreen({
       .catch((err) => console.warn("Sync error:", err));
   };
 
-  // Вычисляемый баннер
   let activeBanner: ActiveEventType = null;
   let bannerSecRemaining: number | undefined = undefined;
 
@@ -169,7 +168,7 @@ export function ShiftScreen({
 
   return (
     <main
-      className="relative w-full h-dvh max-h-dvh bg-[#09050d] text-white flex flex-col justify-between overflow-hidden select-none font-sans"
+      className="relative w-full h-dvh bg-[#09050d] text-white flex items-center justify-center overflow-hidden select-none font-sans"
       style={{
         paddingLeft: "max(8px, env(safe-area-inset-left))",
         paddingRight: "max(8px, env(safe-area-inset-right))",
@@ -178,56 +177,63 @@ export function ShiftScreen({
     >
       <EventBanner activeEvent={activeBanner} remainingSec={bannerSecRemaining} lang={lang} />
 
-      {/* ШАПКА СМЕНЫ (shrink-0) */}
-      <header className="relative z-20 w-full max-w-[960px] mx-auto flex items-center justify-between px-3 py-1 border-b border-zinc-800/60 bg-black/60 backdrop-blur-md shrink-0">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
-          <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-rose-300 uppercase">
-            {t.shiftScreen.shiftTitle}
-          </span>
+      {/* Зажатый контейнер игры: на десктопе держит высоту 560px по центру! */}
+      <div className="relative w-full max-w-[960px] h-full max-h-[560px] flex flex-col justify-between">
+        
+        {/* 1. ШАПКА СМЕНЫ */}
+        <header className="relative z-20 w-full flex items-center justify-between px-3 py-1.5 border-b border-zinc-800/80 bg-black/70 backdrop-blur-md shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+            <span className="text-[11px] font-mono font-bold tracking-[0.2em] text-rose-300 uppercase">
+              {t.shiftScreen.shiftTitle}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-0.5 border border-zinc-700/80 bg-zinc-950">
+            <span className="text-xs">⏱</span>
+            <span className="text-sm font-mono font-black tracking-widest text-amber-300">
+              {formatTime(engineState.timeRemainingSec)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 border border-emerald-800/60 bg-emerald-950/40">
+            <span className="text-[10px] font-mono text-emerald-400 font-bold">¥</span>
+            <span className="text-xs sm:text-sm font-mono font-bold text-emerald-300 tracking-wider">
+              {engineState.grossIncome.toLocaleString()}
+            </span>
+          </div>
+        </header>
+
+        {/* 2. ЦЕНТРАЛЬНАЯ СЕТКА СТОЛОВ (Плотная, без растягивания!) */}
+        <div className="w-full flex-1 flex items-center justify-center px-2 py-2 my-auto">
+          <div className="w-full grid grid-cols-3 gap-2.5 sm:gap-4 items-center">
+            {engineState.tables.map((table) => (
+              <TableSlot
+                key={table.id}
+                lang={lang}
+                table={table}
+                selectedHostessId={selectedHostessId}
+                sheikhAura={engineState.sheikhAuraRemainingSec > 0 && table.id === 1}
+                onAssign={handleAssign}
+                onPlacate={handlePlacate}
+                label={table.id === 1 && ctx.hasVipInterior ? "VIP 1" : `${table.id}`}
+              />
+            ))}
+          </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-0.2 border border-zinc-700/80 bg-zinc-950/80">
-          <span className="text-xs">⏱</span>
-          <span className="text-xs sm:text-sm font-mono font-black tracking-widest text-amber-300">
-            {formatTime(engineState.timeRemainingSec)}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1 px-2 py-0.2 border border-emerald-800/60 bg-emerald-950/30">
-          <span className="text-[9px] font-mono text-emerald-400 font-bold">¥</span>
-          <span className="text-xs sm:text-sm font-mono font-bold text-emerald-300 tracking-wider">
-            {engineState.grossIncome.toLocaleString()}
-          </span>
-        </div>
-      </header>
-
-      {/* ЦЕНТРАЛЬНАЯ РЕЗИНОВАЯ СЕТКА 3 СТОЛОВ (flex-1 min-h-0 items-stretch) */}
-      <div className="relative z-10 w-full max-w-[960px] mx-auto flex-1 min-h-0 grid grid-cols-3 gap-1.5 sm:gap-3 px-2 sm:px-4 py-1 sm:py-2 items-stretch">
-        {engineState.tables.map((table) => (
-          <TableSlot
-            key={table.id}
+        {/* 3. НИЖНЯЯ ПАНЕЛЬ ХОСТЕС */}
+        <footer className="relative z-20 w-full shrink-0">
+          <HostessPicker
             lang={lang}
-            table={table}
+            activeHostesses={engineState.activeHostesses}
             selectedHostessId={selectedHostessId}
-            sheikhAura={engineState.sheikhAuraRemainingSec > 0 && table.id === 1}
-            onAssign={handleAssign}
-            onPlacate={handlePlacate}
-            label={table.id === 1 && ctx.hasVipInterior ? "VIP 1" : `${table.id}`}
+            busyHostessIds={busyHostessIds}
+            onSelectHostess={setSelectedHostessId}
           />
-        ))}
-      </div>
+        </footer>
 
-      {/* НИЖНЯЯ ПАНЕЛЬ ХОСТЕС (shrink-0) */}
-      <footer className="relative z-20 w-full max-w-[960px] mx-auto shrink-0">
-        <HostessPicker
-          lang={lang}
-          activeHostesses={engineState.activeHostesses}
-          selectedHostessId={selectedHostessId}
-          busyHostessIds={busyHostessIds}
-          onSelectHostess={setSelectedHostessId}
-        />
-      </footer>
+      </div>
 
       {/* МОДАЛКА БУХГАЛТЕРСКОГО ОТЧЕТА */}
       {completedReport !== null && (

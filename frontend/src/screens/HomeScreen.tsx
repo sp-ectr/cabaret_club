@@ -36,6 +36,7 @@ export type ShiftLaunch =
 interface HomeScreenProps {
   lang: Language;
   onExit: () => void;
+  /** Смена запущена или найдена активная — родитель открывает экран смены */
   onShiftLaunched: (launch: ShiftLaunch) => void;
 }
 
@@ -59,16 +60,14 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
   });
 
   const handleInit = (data: InitGameResponse) => {
-    // 1. Если активна смена — мгновенный реконнект
     if (data.activeShift) {
       launchRef.current({ kind: "reconnect", shift: data.activeShift });
       return;
     }
-    
+
     setGame(data);
     if (data.autoClosedShift) setClosedNotice(data.autoClosedShift);
 
-    // 2. Показ обучения при первом входе только после загрузки данных!
     const hasSeen = localStorage.getItem("cabaret_seen_tutorial");
     if (!hasSeen) {
       setModal("tutorial");
@@ -96,17 +95,26 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
     try {
       handleInit(await api.initGame());
     } catch {
-      // Ошибки показывают модалки
+      // Ошибки показывают сами модалки
     }
   };
 
   const closeModal = () => {
-    // Если закрыли модалку обучения — сохраняем флаг просмотра
     if (modal === "tutorial") {
       localStorage.setItem("cabaret_seen_tutorial", "true");
     }
     setModal(null);
     setActiveTab(null);
+  };
+
+  const handleResetGame = async () => {
+    try {
+      const freshData = await api.resetGame();
+      handleInit(freshData);
+    } catch {
+      localStorage.removeItem("cabaret_guest_id");
+      window.location.reload();
+    }
   };
 
   const menuItems: {
@@ -125,7 +133,7 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
 
   if (loadError) {
     return (
-      <main className="w-full h-full flex flex-col items-center justify-center gap-3 bg-[#09050d] px-6">
+      <main className="w-full h-full flex flex-col items-center justify-center gap-3 bg-[#09050d] px-6 select-none font-sans">
         <div className="border border-rose-500/40 bg-rose-950/25 px-4 py-2 text-[11px] font-mono text-rose-300 text-center max-w-[420px]">
           {loadError}
         </div>
@@ -144,7 +152,7 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
 
   if (!game) {
     return (
-      <main className="w-full h-full flex items-center justify-center bg-[#09050d]">
+      <main className="w-full h-full flex items-center justify-center bg-[#09050d] select-none font-sans">
         <span className="text-[11px] font-mono tracking-[0.3em] text-rose-400/70 uppercase animate-cabaretPulse px-6 py-4 border border-rose-500/30">
           {t.loadingClub}
         </span>
@@ -156,7 +164,7 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
 
   return (
     <main
-      className="relative w-full h-full flex items-center justify-center bg-[#09050d] overflow-hidden select-none"
+      className="relative w-full h-full flex items-center justify-center bg-[#09050d] overflow-hidden select-none font-sans"
       style={{
         paddingLeft: "max(8px, env(safe-area-inset-left))",
         paddingRight: "max(8px, env(safe-area-inset-right))",
@@ -200,25 +208,25 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
             {/* Баланс: йены */}
             <div className="flex items-center gap-1.5 bg-black/70 border border-zinc-800/80 px-2.5 py-1 backdrop-blur-md">
               <Coins className="w-3 h-3 text-amber-400 shrink-0" />
-              <span className="text-[10px] sm:text-[11px] font-mono font-bold text-amber-300 tracking-wider">
+              <span className={`text-[10px] sm:text-[11px] font-mono font-bold tracking-wider ${player.yen < 0 ? "text-rose-400" : "text-amber-300"}`}>
                 ¥ {player.yen.toLocaleString()}
               </span>
             </div>
 
             {/* Флаги конца игры */}
             {player.victory && (
-              <div className="border border-amber-500/60 bg-amber-950/30 px-2 py-1 text-[8px] font-mono tracking-[0.15em] text-amber-300">
+              <div className="border border-amber-500/60 bg-amber-950/30 px-2 py-1 text-[8px] font-mono tracking-[0.15em] text-amber-300 animate-pulse">
                 {t.victoryPlate}
               </div>
             )}
             {player.defeat && !player.victory && (
-              <div className="border border-rose-500/60 bg-rose-950/40 px-2 py-1 text-[8px] font-mono tracking-[0.15em] text-rose-300">
+              <div className="border border-rose-500/60 bg-rose-950/40 px-2 py-1 text-[8px] font-mono tracking-[0.15em] text-rose-300 animate-pulse">
                 GAME OVER
               </div>
             )}
           </div>
 
-          {/* Правая часть шапки: Обучение, Бейдж демо и Выход */}
+          {/* Правая часть: Обучение, Бейдж демо и Выход */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setModal("tutorial")}
@@ -304,15 +312,31 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
 
           <div className="flex-1 h-full flex items-center justify-center pointer-events-none" />
 
-          {/* ПРАВЫЙ НИЖНИЙ УГОЛ: запуск смены */}
-          <div className="flex flex-col items-end justify-end self-end mb-1">
+          {/* ПРАВЫЙ НИЖНИЙ УГОЛ: запуск смены / банкротство / победа */}
+          <div className="flex flex-col items-end justify-end self-end mb-1 gap-2">
             {player.defeat ? (
-              <div className="border border-rose-500/60 bg-rose-950/40 px-5 py-3 text-[10px] font-mono font-bold text-rose-300 tracking-[0.15em] text-center">
-                {t.preShiftModal.bankruptcy}
+              <div className="flex flex-col items-end gap-2 max-w-[280px]">
+                <div className="border border-rose-500/60 bg-rose-950/80 px-4 py-2 text-[10px] font-mono font-bold text-rose-300 tracking-[0.15em] text-center shadow-[0_0_15px_rgba(244,63,94,0.4)]">
+                  {t.preShiftModal.bankruptcy}
+                </div>
+                <button
+                  onClick={handleResetGame}
+                  className="w-full min-h-[38px] px-6 border-2 border-rose-500 bg-gradient-to-r from-rose-950 to-rose-900 hover:border-rose-400 text-rose-100 font-mono font-black text-xs tracking-[0.2em] uppercase transition-all active:scale-95 shadow-[0_0_20px_rgba(244,63,94,0.7)] animate-pulse cursor-pointer"
+                >
+                  {t.shiftSummary.retryBtn} &gt;&gt;
+                </button>
               </div>
             ) : player.victory ? (
-              <div className="border border-amber-500/60 bg-amber-950/30 px-5 py-3 text-[10px] font-mono font-bold text-amber-300 tracking-[0.15em] text-center">
-                {t.victoryPlate}
+              <div className="flex flex-col items-end gap-2 max-w-[280px]">
+                <div className="border border-amber-500/60 bg-amber-950/60 px-4 py-2 text-[10px] font-mono font-bold text-amber-300 tracking-[0.15em] text-center shadow-[0_0_15px_rgba(251,191,36,0.4)]">
+                  {t.victoryPlate}
+                </div>
+                <button
+                  onClick={handleResetGame}
+                  className="w-full min-h-[38px] px-6 border-2 border-amber-500 bg-gradient-to-r from-amber-950 to-amber-900 hover:border-amber-400 text-amber-100 font-mono font-black text-xs tracking-[0.2em] uppercase transition-all active:scale-95 shadow-[0_0_20px_rgba(251,191,36,0.6)] cursor-pointer"
+                >
+                  {t.shiftSummary.retryBtn} &gt;&gt;
+                </button>
               </div>
             ) : (
               <button

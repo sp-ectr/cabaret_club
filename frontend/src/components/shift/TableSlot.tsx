@@ -1,6 +1,3 @@
-// src/components/shift/TableSlot.tsx
-// Адаптивная карточка стола: резиновая высота под любые экраны мобилок.
-
 import type {
   GameTable,
   Guest,
@@ -65,12 +62,8 @@ function guestGlow(type: GuestType): string {
 }
 
 function badgeClasses(fb: MatchFeedback): string {
-  if (fb === "PERFECT") {
-    return "bg-amber-400 text-black border-2 border-amber-200 shadow-[0_0_20px_rgba(251,191,36,0.95)]";
-  }
-  if (fb === "GOOD") {
-    return "bg-teal-600 text-white border border-teal-300 shadow-[0_0_12px_rgba(20,184,166,0.8)]";
-  }
+  if (fb === "PERFECT") return "bg-amber-400 text-black border-2 border-amber-200 shadow-[0_0_20px_rgba(251,191,36,0.95)]";
+  if (fb === "GOOD") return "bg-teal-600 text-white border border-teal-300 shadow-[0_0_12px_rgba(20,184,166,0.8)]";
   return "bg-rose-700 text-white border border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.8)]";
 }
 

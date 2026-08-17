@@ -28,6 +28,7 @@ from app.schemas.shop import (
 )
 from app.schemas.shift import ShiftStateResponse, ShiftReportDTO, TableDTO
 from app.core.balance import (
+    STARTING_YEN,
     RENT_BY_TIER,
     HOSTESS_WAGE_PER_SHIFT,
     BOUNCER_COST_PER_SHIFT,
@@ -163,7 +164,6 @@ async def init_game(
                         net_yen=net_yen,
                     )
                 except IntegrityError:
-                    # Запись уже в базе (failover) — откатываемся и отдаем сохраненный отчет
                     await session.rollback()
                     stmt_hist = select(ShiftHistory).where(ShiftHistory.shift_id == shift_uuid)
                     existing = (await session.execute(stmt_hist)).scalar_one()
@@ -188,7 +188,6 @@ async def init_game(
                         net_yen=int(existing.net_yen),
                     )
         else:
-            # Смена активна -> возвращаем полный срез
             time_rem = max(0, SHIFT_DURATION_SEC - elapsed)
             server_stamina = json.loads(raw_session.get("server_stamina_json", "{}"))
             tables_data = json.loads(raw_session.get("tables_json", "[]"))
@@ -337,3 +336,41 @@ async def upgrade_club(
         ),
         victory=cast(bool, locked_user.victory),
     )
+
+@router.post("/game/reset", response_model=GameInitResponse)
+async def reset_game(
+    user: User = Depends(get_current_guest),
+    session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
+):
+    session_key = f"session:{user.device_id}"
+    lock_key = f"lock:shift:{user.device_id}"
+    await redis.delete(session_key, lock_key)
+
+    stmt_user = select(User).where(User.device_id == user.device_id).with_for_update()
+    res_user = await session.execute(stmt_user)
+    locked_user = res_user.scalar_one()
+
+    # 1. Сброс игрока к стартовому балансу ¥60,000 и 1 звезде
+    locked_user.yen = STARTING_YEN
+    locked_user.club_tier = 1
+    locked_user.vip_interior = False
+    locked_user.premium_bar = False
+    locked_user.neon_sign = False
+    locked_user.etiquette = False
+    locked_user.victory = False
+    locked_user.defeat = False
+
+    # 2. Сброс хостес к стартовому составу
+    stmt_h = select(UserHostess).where(UserHostess.device_id == locked_user.device_id).with_for_update()
+    res_h = await session.execute(stmt_h)
+    hostesses = list(res_h.scalars().all())
+
+    for h in hostesses:
+        h.hired = h.hostess_id in ["YUKI", "MIRA", "SAKURA"]
+        h.stamina = STAMINA_MAX
+
+    await session.commit()
+    await session.refresh(locked_user)
+
+    return await init_game(locked_user, session, redis)
