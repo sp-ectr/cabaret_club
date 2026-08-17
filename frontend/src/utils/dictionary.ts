@@ -1,7 +1,7 @@
 // Тип поддерживаемых языков
 export type Language = "ru" | "en";
 // Тип стейт экранов
-export type Screen = "TAP" | "VIDEO" | "HOME";
+export type Screen = "TAP" | "VIDEO" | "HOME" | "SHIFT";
 
 export const BRAND = {
   subtitle: "RULE THE NIGHT",
@@ -40,7 +40,6 @@ export const DICTIONARY: Record<
         upgrades: Record<"NEON_SIGN" | "VIP_INTERIOR" | "PREMIUM_BAR" | "ETIQUETTE", {
             name: string;
             desc: string;
-            kind: string;
         }>;
     };
     hostessModal: {
@@ -56,9 +55,29 @@ export const DICTIONARY: Record<
         burnoutHint: string;
         stats: { talk: string; charisma: string; service: string };
     };
+    preShiftModal: {
+        title: string;
+        bouncerLabel: string;
+        bouncerDesc: string;
+        rentLabel: string;
+        fotLabel: string;
+        bouncerLine: string;
+        totalLabel: string;
+        balanceLabel: string;
+        expenseNote: string;
+        start: string;
+        needOne: string;
+        zeroStaff: string;
+        bankruptcy: string;
+        burnoutPlate: string;
+        inRoster: string;
+    };
     openClub: string;
     exit: string;
     demoBadge: string;
+    victoryPlate: string;
+    closedShift: string;
+    loadingClub: string;
   }
 > = {
   ru: {
@@ -90,10 +109,10 @@ export const DICTIONARY: Record<
         owned: "КУПЛЕНО",
         requiresTier: "ТРЕБУЕТСЯ ★★",
         upgrades: {
-            NEON_SIGN: { name: "НЕОНОВАЯ ВЫВЕСКА", desc: "Пауза столов 10с → 4с. Вместимость смены растёт до ~24 гостей", kind: "ПРОПУСКНАЯ" },
-            VIP_INTERIOR: { name: "VIP-ИНТЕРЬЕР", desc: "VIP Tip +¥50,000 за богача при идеальном подборе (M ≥ 1.7)", kind: "НАГРАДА" },
-            PREMIUM_BAR: { name: "ПРЕМИАЛЬНЫЙ БАР", desc: "Чек богачей ×2, но каждая услуга богача стоит +2 задора", kind: "ЭКОНОМИКА" },
-            ETIQUETTE: { name: "КУРСЫ ЭТИКЕТА", desc: "Расход задора за обслуживание 15 → 10", kind: "ПЕРСОНАЛ" },
+            NEON_SIGN: { name: "НЕОНОВАЯ ВЫВЕСКА", desc: "Яркая вывеска видна с конца улицы — мимо никто не пройдёт. Гостей станет заметно больше!" },
+            VIP_INTERIOR: { name: "VIP-ИНТЕРЬЕР", desc: "Роскошный ремонт понравится самым щедрым гостям — они не пожалеют чаевых для клуба." },
+            PREMIUM_BAR: { name: "ПРЕМИАЛЬНЫЙ БАР", desc: "Элитные напитки в меню — гости остаются дольше и тратят больше." },
+            ETIQUETTE: { name: "КУРСЫ ЭТИКЕТА", desc: "Девушки освоят тонкий сервис и будут уставать гораздо меньше." },
         },
     },
     hostessModal: {
@@ -109,9 +128,29 @@ export const DICTIONARY: Record<
         burnoutHint: "БЛОКИРОВКА",
         stats: { talk: "РЕЧЬ", charisma: "ХАРИЗМА", service: "СЕРВИС" },
     },
+    preShiftModal: {
+        title: "ПОДГОТОВКА К СМЕНЕ",
+        bouncerLabel: "ВЫШИБАЛА НА СМЕНУ",
+        bouncerDesc: "Надёжная защита ваших девочек от незваных гостей",
+        rentLabel: "АРЕНДА ЗАЛА",
+        fotLabel: "ФОТ (СОСТАВ)",
+        bouncerLine: "ВЫШИБАЛА",
+        totalLabel: "ИТОГО РАСХОДОВ СМЕНЫ",
+        balanceLabel: "ТЕКУЩИЙ БАЛАНС",
+        expenseNote: "СПИСЫВАЕТСЯ ИЗ ВЫРУЧКИ ПОСЛЕ СМЕНЫ",
+        start: "НАЧАТЬ СМЕНУ (5 МИНУТ)",
+        needOne: "ВЫБЕРИТЕ МИНИМУМ ОДНУ ХОСТЕС",
+        zeroStaff: "ПЕРСОНАЛ ИСТОЩЁН. ОТПРАВЬТЕ ДЕВУШЕК В СПА",
+        bankruptcy: "БАНКРОТСТВО - НЕКОМУ РАБОТАТЬ И НЕ НА ЧТО ЛЕЧИТЬ",
+        burnoutPlate: "НУЖЕН СПА",
+        inRoster: "В СОСТАВЕ",
+    },
     openClub: "ОТКРЫТЬ КЛУБ",
     exit: "ВЫХОД",
     demoBadge: "MVP DEMO TEST • V0.1",
+    victoryPlate: "ДЕМО ПРОЙДЕНО — КЛУБ №1 В КАМУРОЧО",
+    closedShift: "БРОШЕННАЯ СМЕНА ЗАКРЫТА",
+    loadingClub: "ЗАГРУЗКА КЛУБА",
   },
   en: {
     tapToStart: "[ ENTER THE CLUB ]",
@@ -142,10 +181,10 @@ export const DICTIONARY: Record<
         owned: "OWNED",
         requiresTier: "REQUIRES ★★",
         upgrades: {
-            NEON_SIGN: { name: "NEON SIGN", desc: "Table cooldown 10s → 4s. Shift capacity grows to ~24 guests", kind: "THROUGHPUT" },
-            VIP_INTERIOR: { name: "VIP INTERIOR", desc: "VIP Tip +¥50,000 for a tycoon on a perfect match (M ≥ 1.7)", kind: "REWARD" },
-            PREMIUM_BAR: { name: "PREMIUM BAR", desc: "Tycoon bills ×2, but each tycoon service costs +2 stamina", kind: "ECONOMY" },
-            ETIQUETTE: { name: "ETIQUETTE COURSE", desc: "Service stamina drain 15 → 10", kind: "STAFFING" },
+            NEON_SIGN: { name: "NEON SIGN", desc: "A bright sign visible from the end of the street — nobody walks past. Noticeably more guests!" },
+            VIP_INTERIOR: { name: "VIP INTERIOR", desc: "A luxury renovation for the most generous guests — they will tip the club handsomely." },
+            PREMIUM_BAR: { name: "PREMIUM BAR", desc: "Premium drinks on the menu — guests stay longer and spend more." },
+            ETIQUETTE: { name: "ETIQUETTE COURSE", desc: "Your girls master fine service and get tired much less." },
         },
     },
     hostessModal: {
@@ -161,8 +200,28 @@ export const DICTIONARY: Record<
         burnoutHint: "BLOCKED",
         stats: { talk: "TALK", charisma: "CHARISMA", service: "SERVICE" },
     },
+    preShiftModal: {
+        title: "SHIFT PREPARATION",
+        bouncerLabel: "BOUNCER FOR THE SHIFT",
+        bouncerDesc: "Reliable protection for your girls from unwanted guests",
+        rentLabel: "HALL RENT",
+        fotLabel: "PAYROLL (ROSTER)",
+        bouncerLine: "BOUNCER",
+        totalLabel: "TOTAL SHIFT EXPENSES",
+        balanceLabel: "CURRENT BALANCE",
+        expenseNote: "DEDUCTED FROM SHIFT REVENUE",
+        start: "START SHIFT (5 MINUTES)",
+        needOne: "SELECT AT LEAST ONE HOSTESS",
+        zeroStaff: "STAFF EXHAUSTED. SEND THE GIRLS TO SPA",
+        bankruptcy: "BANKRUPTCY - NO STAFF AND NO MONEY TO HEAL",
+        burnoutPlate: "NEEDS SPA",
+        inRoster: "IN ROSTER",
+    },
     openClub: "OPEN CLUB",
     exit: "EXIT",
     demoBadge: "MVP DEMO TEST • V0.1",
+    victoryPlate: "DEMO COMPLETE — CLUB #1 IN KAMUROCHO",
+    closedShift: "ABANDONED SHIFT CLOSED",
+    loadingClub: "LOADING CLUB",
   },
 };

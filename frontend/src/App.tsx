@@ -8,10 +8,16 @@ import {
   type Screen,
 } from "./utils/dictionary";
 import { MemeIntro } from "./components/memeIntro";
-import { HomeScreen } from "./screens/HomeScreen";
+import { HomeScreen, type ShiftLaunch } from "./screens/HomeScreen";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("TAP");
+  const [shiftLaunch, setShiftLaunch] = useState<ShiftLaunch | null>(null);
+
+  const handleShiftLaunched = (launch: ShiftLaunch) => {
+    setShiftLaunch(launch);
+    setScreen("SHIFT");
+  };
 
   // Хук детектора ориентации
   const isPortrait = useIsPortrait();
@@ -143,9 +149,22 @@ export default function App() {
       {screen === "HOME" && (
         <HomeScreen
           lang={lang}
-          onOpenShift={() => console.log("OPEN SHIFT TRIGGERED")}
+          onShiftLaunched={handleShiftLaunched}
           onExit={() => setScreen("TAP")}
         />
+      )}
+
+      {/* ============ ЭКРАН СМЕНЫ (заглушка до шага 8 - ShiftScreen) ============ */}
+      {screen === "SHIFT" && shiftLaunch && (
+        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-[#09050d] select-none">
+          <div className="border border-rose-500/40 px-6 py-4 text-[11px] font-mono tracking-[0.3em] text-rose-400 uppercase animate-cabaretPulse text-center">
+            СМЕНА ИДЁТ — ЭКРАН СМЕНЫ СТРОИТСЯ В ШАГЕ 8
+          </div>
+          <div className="text-[10px] font-mono text-zinc-500">
+            {shiftLaunch.kind === "reconnect" ? "РЕКОННЕКТ ПОСЛЕ F5" : "СВЕЖИЙ СТАРТ"} · shift{" "}
+            {shiftLaunch.shift.shiftId.slice(0, 8)}…
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 // src/components/modals/ClubModal.tsx
-// Окно «КЛУБ // РАЗВИТИЕ»: 4 перманентных улучшения + прогрессия звёзд.
-// Глупый компонент: данные через props, мутации сам через api,
-// после успеха дергает onChanged - родитель перечитывает состояние.
+// Окно «КЛУБ // РАЗВИТИЕ»: улучшения как витрина магазина - аватар услуги
+// почти во всю карточку, короткий продающий текст, заметная кнопка покупки.
+// Никакой игровой механики в описаниях - мы продаём, а не объясняем формулы.
 
 import { useState } from "react";
 import {
@@ -14,6 +14,11 @@ import {
 import { TIER_UPGRADE_COSTS, UPGRADE_CONFIGS } from "../../game/config";
 import { DICTIONARY, type Language } from "../../utils/dictionary";
 
+import neonSignImg from "../../assets/club/neon_sign.webp";
+import vipInteriorImg from "../../assets/club/vip_interior.webp";
+import premiumBarImg from "../../assets/club/premium_bar.webp";
+import etiquetteImg from "../../assets/club/etiquette.webp";
+
 interface ClubModalProps {
   lang: Language;
   player: PlayerState;
@@ -23,16 +28,22 @@ interface ClubModalProps {
   onChanged: () => void;
 }
 
-// Порядок карточек в сетке (вышибала живёт в подготовке к смене, не тут)
+// Порядок карточек в витрине (вышибала живёт в подготовке к смене, не тут)
 const UPGRADE_ORDER: PermanentUpgradeId[] = ["NEON_SIGN", "VIP_INTERIOR", "PREMIUM_BAR", "ETIQUETTE"];
 
-// Цвета бейджей типов из конфига (kind)
-const KIND_STYLES: Record<string, string> = {
-  SECURITY: "text-rose-300 border-rose-500/40",
-  REWARD: "text-amber-300 border-amber-500/40",
-  ECONOMY: "text-fuchsia-300 border-fuchsia-500/40",
-  THROUGHPUT: "text-cyan-300 border-cyan-500/40",
-  STAFFING: "text-emerald-300 border-emerald-500/40",
+const UPGRADE_IMAGES: Record<PermanentUpgradeId, string> = {
+  NEON_SIGN: neonSignImg,
+  VIP_INTERIOR: vipInteriorImg,
+  PREMIUM_BAR: premiumBarImg,
+  ETIQUETTE: etiquetteImg,
+};
+
+// id улучшения -> ключ флага в UpgradeState
+const OWNED_KEYS: Record<PermanentUpgradeId, keyof UpgradeState> = {
+  NEON_SIGN: "neonSign",
+  VIP_INTERIOR: "vipInterior",
+  PREMIUM_BAR: "premiumBar",
+  ETIQUETTE: "etiquette",
 };
 
 export function ClubModal({ lang, player, upgrades, onClose, onChanged }: ClubModalProps) {
@@ -77,68 +88,66 @@ export function ClubModal({ lang, player, upgrades, onClose, onChanged }: ClubMo
       setClubTier(res.player.clubTier);
     });
 
-  // id улучшения -> ключ флага в UpgradeState
-  const OWNED_KEYS: Record<PermanentUpgradeId, keyof UpgradeState> = {
-    NEON_SIGN: "neonSign",
-    VIP_INTERIOR: "vipInterior",
-    PREMIUM_BAR: "premiumBar",
-    ETIQUETTE: "etiquette",
-  };
-
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5">
-      <div className="relative w-full max-w-[880px] max-h-[90dvh] overflow-y-auto border border-zinc-800 bg-[#0b0710]/95 shadow-[0_0_60px_rgba(0,0,0,0.9)]">
+    <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/85 backdrop-blur-sm p-3 sm:p-5">
+      <div className="relative flex flex-col w-full max-w-[1080px] max-h-[92dvh] border border-zinc-800 bg-[#0b0710]/95 shadow-[0_0_60px_rgba(0,0,0,0.9)]">
 
-        {/* Шапка */}
-        <div className="sticky top-0 z-10 flex justify-between items-center px-4 py-2 border-b border-zinc-800/80 bg-[#0b0710]">
-          <h2 className="text-xs font-mono tracking-[0.3em] text-rose-300 uppercase drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]">
+        {/* Шапка: фиксирована сверху, скролл её не трогает */}
+        <div className="flex justify-between items-center px-4 py-2.5 border-b border-zinc-800/80 bg-[#0b0710] shrink-0">
+          <h2 className="text-sm font-mono tracking-[0.3em] text-rose-300 uppercase drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]">
             {t.title}
           </h2>
-          <button
-            onClick={onClose}
-            aria-label="close"
-            className="w-7 h-7 flex items-center justify-center border border-zinc-700 text-zinc-400 hover:border-rose-500/60 hover:text-rose-300 transition-colors text-xs font-mono cursor-pointer"
-          >
-            [ X ]
-          </button>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-mono font-bold text-amber-300">¥ {yen.toLocaleString()}</span>
+            <button
+              onClick={onClose}
+              aria-label="close"
+              className="h-8 px-2.5 flex items-center justify-center border border-zinc-700 text-zinc-300 hover:border-rose-500/60 hover:text-rose-300 transition-colors text-sm font-mono whitespace-nowrap cursor-pointer"
+            >
+              [ X ]
+            </button>
+          </div>
         </div>
+
+        {/* Контент: скроллится только эта зона */}
+        <div className="overflow-y-auto min-h-0">
 
         {/* Прогрессия звёзд */}
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-zinc-800/60 bg-black/40">
           <div className="flex flex-col gap-0.5 min-w-0">
-            <span className="text-[8px] font-mono tracking-[0.25em] text-zinc-500 uppercase">{t.starsTitle}</span>
-            <span className="text-[11px] sm:text-xs font-mono font-bold text-amber-300 tracking-wider truncate">
+            <span className="text-[10px] font-mono tracking-[0.25em] text-zinc-500 uppercase">{t.starsTitle}</span>
+            <span className="text-sm font-mono font-bold text-amber-300 tracking-wider truncate">
               {t.tierNames[clubTier - 1]}
             </span>
           </div>
 
           {nextTier && nextTierCost !== null ? (
-            <div className="flex items-center gap-2.5 shrink-0">
-              <span className="text-[10px] font-mono text-amber-200/70 whitespace-nowrap">
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-xs font-mono text-amber-200/70 whitespace-nowrap hidden sm:inline">
                 → {t.tierNames[nextTier - 1]}
               </span>
               <button
                 onClick={handleUpgradeTier}
                 disabled={busy !== null || yen < nextTierCost}
                 className={`
-                  min-h-[32px] px-3 sm:px-4 text-[10px] font-mono font-bold tracking-[0.2em] uppercase border transition-all cursor-pointer
+                  min-h-[36px] px-4 text-xs font-mono font-black tracking-[0.15em] uppercase border transition-all cursor-pointer
                   ${yen >= nextTierCost
-                    ? "border-amber-500/60 text-amber-200 bg-amber-950/25 hover:border-amber-400 hover:bg-amber-900/40 active:scale-95 shadow-[0_0_15px_rgba(251,191,36,0.2)]"
+                    ? "border-amber-500/60 text-amber-200 bg-amber-950/25 hover:border-amber-400 hover:bg-amber-900/50 hover:shadow-[0_0_20px_rgba(251,191,36,0.3)] active:scale-95"
                     : "border-zinc-800 text-zinc-600 bg-black/40 cursor-not-allowed"}
                 `}
               >
-                {busy === "TIER" ? "···" : `${t.upgradeTo} · ¥${nextTierCost.toLocaleString()}`}
+                {busy === "TIER" ? "···" : `${t.upgradeTo} · ¥${(nextTierCost / 1000).toFixed(0)}k`}
               </button>
             </div>
           ) : (
-            <span className="text-[10px] font-mono tracking-[0.2em] text-amber-400/80 border border-amber-500/40 px-3 py-1.5">
+            <span className="text-xs font-mono font-black tracking-[0.2em] text-amber-400/90 border border-amber-500/40 px-3 py-1.5">
               {t.maxTier}
             </span>
           )}
         </div>
 
-        {/* Сетка улучшений */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3">
+        {/* Витрина улучшений */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3">
           {UPGRADE_ORDER.map((id) => {
             const cfg = UPGRADE_CONFIGS[id];
             const info = t.upgrades[id];
@@ -150,40 +159,58 @@ export function ClubModal({ lang, player, upgrades, onClose, onChanged }: ClubMo
             return (
               <div
                 key={id}
-                className={`flex flex-col gap-1.5 p-2.5 border bg-black/50
-                  ${alreadyOwned ? "border-emerald-700/40" : "border-zinc-800 hover:border-zinc-700"}`}
+                className={`flex flex-col border bg-black/60 overflow-hidden
+                  ${alreadyOwned ? "border-emerald-600/60" : "border-zinc-800 hover:border-zinc-600"}`}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`text-[11px] font-bold tracking-wider uppercase ${alreadyOwned ? "text-emerald-300/80" : "text-zinc-100"}`}>
+                {/* Аватар услуги во весь квадрат */}
+                <div className="relative">
+                  <img
+                    src={UPGRADE_IMAGES[id]}
+                    alt={info.name}
+                    draggable={false}
+                    className={`w-full aspect-square object-cover ${alreadyOwned ? "opacity-80" : ""}`}
+                  />
+                  {alreadyOwned && (
+                    <span className="absolute top-1.5 right-1.5 text-[11px] font-black tracking-[0.15em] px-2 py-0.5 bg-black/80 border border-emerald-500/70 text-emerald-300">
+                      {t.owned}
+                    </span>
+                  )}
+                  {tierLocked && !alreadyOwned && (
+                    <span className="absolute top-1.5 right-1.5 text-[11px] font-black tracking-[0.15em] px-2 py-0.5 bg-black/80 border border-amber-500/70 text-amber-300">
+                      ★★
+                    </span>
+                  )}
+                </div>
+
+                {/* Название */}
+                <div className="text-center py-1.5 border-b border-zinc-800/80">
+                  <span className="text-base font-black text-zinc-100 tracking-[0.1em] uppercase">
                     {info.name}
-                  </span>
-                  <span className={`text-[7px] font-mono px-1.5 py-0.5 border tracking-[0.15em] ${KIND_STYLES[cfg.kind] ?? "text-zinc-400 border-zinc-700"}`}>
-                    {info.kind}
                   </span>
                 </div>
 
-                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">{info.desc}</p>
+                {/* Продающее описание */}
+                <p className="px-2.5 py-2 text-xs leading-snug text-zinc-300/80 flex-1">
+                  {info.desc}
+                </p>
 
-                <div className="flex items-center justify-between gap-2 mt-auto pt-1">
-                  <span className={`text-[11px] font-mono font-bold ${canAfford ? "text-amber-300" : "text-zinc-600"}`}>
-                    ¥ {cfg.cost.toLocaleString()}
+                {/* Цена и покупка */}
+                <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5">
+                  <span className={`text-lg font-mono font-bold ${canAfford ? "text-amber-300" : "text-zinc-600"}`}>
+                    ¥{(cfg.cost / 1000).toFixed(0)}k
                   </span>
 
-                  {alreadyOwned ? (
-                    <span className="text-[9px] font-mono tracking-[0.2em] text-emerald-400/80 px-3 py-1.5 border border-emerald-700/40">
-                      {t.owned}
-                    </span>
-                  ) : (
+                  {alreadyOwned ? null : (
                     <button
                       onClick={() => handleBuy(id)}
                       disabled={disabled}
                       title={tierLocked ? t.requiresTier : undefined}
                       className={`
-                        min-h-[30px] px-4 text-[10px] font-mono font-bold tracking-[0.2em] uppercase border transition-all
+                        min-h-[40px] px-4 text-xs font-black tracking-[0.2em] uppercase border transition-all
                         ${tierLocked
                           ? "border-amber-500/30 text-amber-300/50 cursor-not-allowed"
                           : canAfford
-                            ? "border-rose-500/50 text-rose-100 bg-rose-950/30 hover:border-rose-400 hover:bg-rose-900/45 active:scale-95 cursor-pointer shadow-[0_0_12px_rgba(244,63,94,0.2)]"
+                            ? "border-rose-500/70 text-rose-100 bg-rose-950/40 hover:border-rose-400 hover:bg-rose-900/60 hover:shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-95 cursor-pointer"
                             : "border-zinc-800 text-zinc-600 cursor-not-allowed"}
                       `}
                     >
@@ -198,10 +225,12 @@ export function ClubModal({ lang, player, upgrades, onClose, onChanged }: ClubMo
 
         {/* Строка ошибки */}
         {error && (
-          <div className="mx-3 mb-3 border border-rose-500/40 bg-rose-950/30 px-3 py-1.5 text-[10px] font-mono text-rose-300">
+          <div className="mx-3 mb-3 border border-rose-500/40 bg-rose-950/30 px-3 py-2 text-xs font-mono text-rose-300">
             {error}
           </div>
         )}
+
+        </div>
       </div>
     </div>
   );
