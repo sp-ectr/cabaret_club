@@ -1,5 +1,12 @@
-from app.schemas.common import ErrorResponse, ErrorDetail
-from app.schemas.game import PlayerDTO, HostessStateDTO, UpgradesDTO
+from app.schemas.common import (
+    ErrorResponse,
+    ErrorDetail,
+    PlayerDTO,
+    HostessStateDTO,
+    UpgradesDTO,
+    ClubTierType,
+    HostessIdType
+)
 from app.schemas.shift import (
     GuestDTO,
     TableDTO,
@@ -11,8 +18,8 @@ from app.schemas.shift import (
     ShiftReportDTO,
     ShiftCompleteRequest,
     ShiftCompleteResponse,
-    GameInitResponse,
 )
+from app.schemas.game import GameInitResponse
 from app.schemas.hostess import HostessHireRequest, HostessRecoverRequest, HostessMutationResponse
 from app.schemas.shop import ShopBuyRequest, ShopBuyResponse, ClubUpgradeResponse
 
@@ -22,6 +29,8 @@ __all__ = [
     "PlayerDTO",
     "HostessStateDTO",
     "UpgradesDTO",
+    "ClubTierType",
+    "HostessIdType",
     "GuestDTO",
     "TableDTO",
     "ShiftStartRequest",

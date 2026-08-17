@@ -1,0 +1,27 @@
+services:
+  cabaret_db:
+    image: postgres:15-alpine
+    container_name: cabaret_db_dev
+    environment:
+      POSTGRES_USER: cabaret_user
+      POSTGRES_PASSWORD: cabaret_pass
+      POSTGRES_DB: cabaret_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - cabaret_postgres_dev_data:/var/lib/postgresql/data
+    restart: always
+
+  cabaret_redis:
+    image: redis:7-alpine
+    container_name: cabaret_redis_dev
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"
+    volumes:
+      - cabaret_redis_dev_data:/data
+    restart: always
+
+volumes:
+  cabaret_postgres_dev_data:
+  cabaret_redis_dev_data:

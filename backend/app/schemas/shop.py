@@ -1,6 +1,6 @@
 from typing import Literal
 from pydantic import BaseModel
-from app.schemas.game import PlayerDTO, UpgradesDTO
+from app.schemas.common import PlayerDTO, UpgradesDTO
 
 class ShopBuyRequest(BaseModel):
     upgrade_id: Literal["VIP_INTERIOR", "PREMIUM_BAR", "NEON_SIGN", "ETIQUETTE"]

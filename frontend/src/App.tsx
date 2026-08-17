@@ -9,20 +9,19 @@ import {
 } from "./utils/dictionary";
 import { MemeIntro } from "./components/memeIntro";
 import { HomeScreen, type ShiftLaunch } from "./screens/HomeScreen";
+import { ShiftScreen } from "./screens/ShiftScreen";
+import { INITIAL_HOSTESSES } from "./game/config";
+import type { Hostess, ClubTier } from "./game/types";
+import type { ShiftContext } from "./game/shiftEngine"; // <-- Импорт из правильного файла!
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("TAP");
   const [shiftLaunch, setShiftLaunch] = useState<ShiftLaunch | null>(null);
 
-  const handleShiftLaunched = (launch: ShiftLaunch) => {
-    setShiftLaunch(launch);
-    setScreen("SHIFT");
-  };
-
-  // Хук детектора ориентации
+  // Хук детектора ориентации экрана
   const isPortrait = useIsPortrait();
 
-  // Ленивая инициализация языка из локали браузера
+  // Ленивая инициализация языка из браузера
   const getInitialLanguage = (): Language => {
     const navLang = navigator.language?.slice(0, 2).toLowerCase();
     if (navLang === "ru" || navLang === "be" || navLang === "uk") {
@@ -37,18 +36,91 @@ export default function App() {
     setScreen("VIDEO");
   };
 
+  // Запуск смены (свежий старт или F5-реконнект)
+  const handleShiftLaunched = (launch: ShiftLaunch) => {
+    setShiftLaunch(launch);
+    setScreen("SHIFT");
+  };
+
+  // Завершение смены и возврат в главное меню
+  const handleShiftFinish = () => {
+    setShiftLaunch(null);
+    setScreen("HOME");
+  };
+
+  // Гидратация состава хостес и контекста улучшений для смены
+  const buildShiftProps = (launch: ShiftLaunch) => {
+    if (launch.kind === "fresh") {
+      const activeHostesses: Hostess[] = INITIAL_HOSTESSES.filter((h) =>
+        launch.rosterIds.includes(h.id)
+      ).map((h) => ({
+        id: h.id,
+        name: h.name,
+        rarity: h.rarity,
+        stamina: h.stamina,
+        stats: h.stats,
+        hired: true,
+      }));
+
+      const ctx: ShiftContext = {
+        tier: 1,
+        hasBouncer: launch.hasBouncer,
+        hasNeonSign: false,
+        hasVipInterior: false,
+        hasPremiumBar: false,
+        hasEtiquette: false,
+      };
+
+      return {
+        shiftId: launch.shift.shiftId,
+        startedAt: launch.shift.startedAt,
+        seed: launch.shift.seed,
+        ctx,
+        initialHostesses: activeHostesses,
+      };
+    }
+
+    // Режим реконнекта
+    const activeHostesses: Hostess[] = launch.shift.roster.map((r) => {
+      const staticData = INITIAL_HOSTESSES.find((h) => h.id === r.id);
+      return {
+        id: r.id,
+        name: staticData?.name || r.id,
+        rarity: staticData?.rarity || "R",
+        stamina: r.stamina,
+        stats: staticData?.stats || { talk: 50, charisma: 50, service: 50 },
+        hired: true,
+      };
+    });
+
+    const ctx: ShiftContext = {
+      tier: launch.shift.tier as ClubTier,
+      hasBouncer: launch.shift.hasBouncer,
+      hasNeonSign: false,
+      hasVipInterior: false,
+      hasPremiumBar: false,
+      hasEtiquette: false,
+    };
+
+    return {
+      shiftId: launch.shift.shiftId,
+      startedAt: launch.shift.startedAt,
+      seed: launch.shift.seed,
+      ctx,
+      initialHostesses: activeHostesses,
+    };
+  };
+
   return (
-    <div 
+    <div
       className="relative w-full h-dvh bg-[#09050d] text-rose-500 overflow-hidden select-none font-sans flex items-center justify-center overscroll-none touch-none"
       style={{
-        // Защита от Dynamic Island и вырезов камер по бокам экрана
         paddingLeft: "max(12px, env(safe-area-inset-left))",
         paddingRight: "max(12px, env(safe-area-inset-right))",
         paddingTop: "max(8px, env(safe-area-inset-top))",
         paddingBottom: "max(8px, env(safe-area-inset-bottom))",
       }}
     >
-      
       {/* ================= 1. ЭКРАН-БЛОКИРОВЩИК ПОРТРЕТНОГО РЕЖИМА ================= */}
       {isPortrait && (
         <div className="absolute inset-0 z-50 bg-[#09050d]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
@@ -65,14 +137,14 @@ export default function App() {
         </div>
       )}
 
-      {/* ================= 2. ЭКРАН TAP (Адаптирован под любые габариты) ================= */}
+      {/* ================= 2. ЭКРАН TAP (Старт) ================= */}
       {screen === "TAP" && (
         <main className="w-full max-w-[960px] h-full flex flex-row items-center justify-center px-4 sm:px-8 py-2 sm:py-4 relative overflow-hidden gap-6 sm:gap-12">
           {/* Неоновые фоновые пятна */}
           <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[340px] h-[340px] bg-rose-600/10 blur-[90px] rounded-full pointer-events-none" />
           <div className="absolute top-1/2 right-1/3 -translate-y-1/2 w-[240px] h-[240px] bg-amber-500/5 blur-[80px] rounded-full pointer-events-none" />
 
-          {/* ЛЕВАЯ ЧАСТЬ: ЛОГОТИП (Ограничен по высоте max-h-[58dvh]) */}
+          {/* ЛОГОТИП */}
           <div className="relative z-10 flex flex-col items-center justify-center max-w-[min(45vw,380px)] shrink-0">
             <img
               src={logoImg}
@@ -86,9 +158,8 @@ export default function App() {
             </div>
           </div>
 
-          {/* ПРАВАЯ ЧАСТЬ: КНОПКИ ДЕЙСТВИЯ */}
+          {/* КНОПКИ ДЕЙСТВИЯ */}
           <div className="relative z-10 flex flex-col items-start justify-center gap-2.5 sm:gap-3.5 shrink-0">
-            {/* Кнопка входа: минимальная высота 44px под палец */}
             <button
               onClick={handleTapStart}
               className="
@@ -113,7 +184,6 @@ export default function App() {
               </span>
             </button>
 
-            {/* Кнопка смены языка */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -145,7 +215,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ================= 4. ГЛАВНЫЙ ЭКРАН КЛУБА ================= */}
+      {/* ================= 4. ГЛАВНЫЙ ЭКРАН ХАБА ================= */}
       {screen === "HOME" && (
         <HomeScreen
           lang={lang}
@@ -154,17 +224,13 @@ export default function App() {
         />
       )}
 
-      {/* ============ ЭКРАН СМЕНЫ (заглушка до шага 8 - ShiftScreen) ============ */}
+      {/* ================= 5. БОЕВОЙ ЭКРАН СМЕНЫ ================= */}
       {screen === "SHIFT" && shiftLaunch && (
-        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-[#09050d] select-none">
-          <div className="border border-rose-500/40 px-6 py-4 text-[11px] font-mono tracking-[0.3em] text-rose-400 uppercase animate-cabaretPulse text-center">
-            СМЕНА ИДЁТ — ЭКРАН СМЕНЫ СТРОИТСЯ В ШАГЕ 8
-          </div>
-          <div className="text-[10px] font-mono text-zinc-500">
-            {shiftLaunch.kind === "reconnect" ? "РЕКОННЕКТ ПОСЛЕ F5" : "СВЕЖИЙ СТАРТ"} · shift{" "}
-            {shiftLaunch.shift.shiftId.slice(0, 8)}…
-          </div>
-        </div>
+        <ShiftScreen
+          lang={lang}
+          {...buildShiftProps(shiftLaunch)}
+          onFinish={handleShiftFinish}
+        />
       )}
     </div>
   );

@@ -1,8 +1,3 @@
-// src/screens/HomeScreen.tsx
-// ХАБ клуба: реальные данные из api.initGame, три модалки, реконнект-роутинг.
-// При загрузке: если сервер видит активную смену - мгновенно уходим на неё,
-// игрок не должен видеть кнопку "Начать смену", когда смена уже тикает.
-
 import { useEffect, useRef, useState } from "react";
 import {
   api,
@@ -22,16 +17,18 @@ import {
   ShoppingBag,
   LogOut,
   Coins,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 import { ClubModal } from "../components/modals/ClubModal";
 import { HostessModal } from "../components/modals/HostessModal";
 import { PreShiftModal } from "../components/modals/PreShiftModal";
+import { TutorialModal } from "../components/modals/TutorialModal";
 
 export type TabType = "club" | "hostess" | "ranking" | "missions" | "shop";
-type ModalKind = "club" | "hostess" | "preshift" | null;
+type ModalKind = "club" | "hostess" | "preshift" | "tutorial" | null;
 
-/** Данные для запуска экрана смены: свежий старт или реконнект после F5 */
+/** Данные для запуска экрана смены */
 export type ShiftLaunch =
   | { kind: "fresh"; shift: StartShiftResponse; rosterIds: HostessId[]; hasBouncer: boolean }
   | { kind: "reconnect"; shift: ShiftState };
@@ -39,11 +36,9 @@ export type ShiftLaunch =
 interface HomeScreenProps {
   lang: Language;
   onExit: () => void;
-  /** смена запущена или найдена активная - родитель открывает экран смены */
   onShiftLaunched: (launch: ShiftLaunch) => void;
 }
 
-// Мок профиля для веб-версии: реальный аккаунт подключим при возврате Telegram
 const MOCK_USER = {
   username: "KIRYU_CHAN",
   photoUrl: undefined as string | undefined,
@@ -58,20 +53,26 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [closedNotice, setClosedNotice] = useState<ShiftReport | null>(null);
 
-  // Реф, чтобы колбэк родителя не перезапускал эффект загрузки
   const launchRef = useRef(onShiftLaunched);
   useEffect(() => {
     launchRef.current = onShiftLaunched;
   });
 
   const handleInit = (data: InitGameResponse) => {
-    // Реконнект: активная смена на сервере - уходим в неё минуя всё
+    // 1. Если активна смена — мгновенный реконнект
     if (data.activeShift) {
       launchRef.current({ kind: "reconnect", shift: data.activeShift });
       return;
     }
+    
     setGame(data);
     if (data.autoClosedShift) setClosedNotice(data.autoClosedShift);
+
+    // 2. Показ обучения при первом входе только после загрузки данных!
+    const hasSeen = localStorage.getItem("cabaret_seen_tutorial");
+    if (!hasSeen) {
+      setModal("tutorial");
+    }
   };
 
   useEffect(() => {
@@ -91,13 +92,21 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
     };
   }, []);
 
-  // Перечитать состояние после мутаций в модалках
   const refresh = async () => {
     try {
       handleInit(await api.initGame());
     } catch {
-      // ошибки мутаций показывают сами модалки, локальное состояние не трогаем
+      // Ошибки показывают модалки
     }
+  };
+
+  const closeModal = () => {
+    // Если закрыли модалку обучения — сохраняем флаг просмотра
+    if (modal === "tutorial") {
+      localStorage.setItem("cabaret_seen_tutorial", "true");
+    }
+    setModal(null);
+    setActiveTab(null);
   };
 
   const menuItems: {
@@ -113,8 +122,6 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
     { id: "missions", title: t.menu.missions, subtitle: t.menu.missionsSub, icon: CheckSquare, isSoon: true },
     { id: "shop", title: t.menu.shop, subtitle: t.menu.shopSub, icon: ShoppingBag, isSoon: true },
   ];
-
-  // ============ Состояния загрузки и ошибки ============
 
   if (loadError) {
     return (
@@ -145,8 +152,6 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
     );
   }
 
-  // ============ Основной экран ============
-
   const { player } = game;
 
   return (
@@ -159,7 +164,6 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
         paddingBottom: "max(4px, env(safe-area-inset-bottom))",
       }}
     >
-      {/* Главный контейнер формата 16:9 / Widescreen */}
       <div
         className="relative w-full max-w-[960px] h-full flex flex-col justify-between px-3 sm:px-5 py-2 sm:py-3 overflow-hidden font-sans border-x border-zinc-900/50 shadow-[0_0_80px_rgba(0,0,0,0.95)]"
         style={{
@@ -193,7 +197,7 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
               </div>
             </div>
 
-            {/* Баланс: единственная валюта - йены */}
+            {/* Баланс: йены */}
             <div className="flex items-center gap-1.5 bg-black/70 border border-zinc-800/80 px-2.5 py-1 backdrop-blur-md">
               <Coins className="w-3 h-3 text-amber-400 shrink-0" />
               <span className="text-[10px] sm:text-[11px] font-mono font-bold text-amber-300 tracking-wider">
@@ -214,10 +218,20 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
             )}
           </div>
 
+          {/* Правая часть шапки: Обучение, Бейдж демо и Выход */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setModal("tutorial")}
+              className="flex items-center gap-1 border border-zinc-800 bg-black/70 hover:border-amber-500/50 hover:bg-amber-950/20 text-zinc-400 hover:text-amber-300 px-2.5 py-1 font-mono text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
+            >
+              <HelpCircle className="w-3 h-3" />
+              <span>{t.tutorialModal.helpBtn}</span>
+            </button>
+
             <div className="hidden sm:block border border-zinc-800 bg-black/50 px-2.5 py-1 backdrop-blur-sm">
               <span className="text-[9px] font-mono tracking-widest text-zinc-400">{t.demoBadge}</span>
             </div>
+            
             <button
               onClick={onExit}
               className="flex items-center gap-1 border border-zinc-800 bg-black/70 hover:border-rose-500/50 hover:bg-rose-950/25 text-zinc-400 hover:text-rose-300 px-2.5 py-1 font-mono text-[9px] tracking-wider transition-all active:scale-95 cursor-pointer"
@@ -246,7 +260,6 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
 
         {/* ================= 2. ЦЕНТРАЛЬНАЯ РАБОЧАЯ ОБЛАСТЬ ================= */}
         <div className="relative z-10 flex flex-1 items-center justify-between my-1">
-          {/* ЛЕВОЕ МЕНЮ: подсветка только по клику, изначально ничего не выделено */}
           <nav className="flex flex-col gap-1.5 w-[185px] sm:w-[205px]">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -289,10 +302,9 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
             })}
           </nav>
 
-          {/* ЦЕНТР: свободное место под арт хостес */}
           <div className="flex-1 h-full flex items-center justify-center pointer-events-none" />
 
-          {/* ПРАВЫЙ НИЖНИЙ УГОЛ: запуск смены / финальные состояния */}
+          {/* ПРАВЫЙ НИЖНИЙ УГОЛ: запуск смены */}
           <div className="flex flex-col items-end justify-end self-end mb-1">
             {player.defeat ? (
               <div className="border border-rose-500/60 bg-rose-950/40 px-5 py-3 text-[10px] font-mono font-bold text-rose-300 tracking-[0.15em] text-center">
@@ -324,7 +336,7 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
             lang={lang}
             player={game.player}
             upgrades={game.upgrades}
-            onClose={() => setModal(null)}
+            onClose={closeModal}
             onChanged={refresh}
           />
         )}
@@ -333,7 +345,7 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
             lang={lang}
             player={game.player}
             hostesses={game.hostesses}
-            onClose={() => setModal(null)}
+            onClose={closeModal}
             onChanged={refresh}
           />
         )}
@@ -342,16 +354,19 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
             lang={lang}
             player={game.player}
             hostesses={game.hostesses}
-            onClose={() => setModal(null)}
+            onClose={closeModal}
             onStart={(shift, selectedIds, hasBouncer) => {
-              setModal(null);
+              closeModal();
               onShiftLaunched({ kind: "fresh", shift, rosterIds: selectedIds, hasBouncer });
             }}
             onAlreadyActive={(shiftState) => {
-              setModal(null);
+              closeModal();
               onShiftLaunched({ kind: "reconnect", shift: shiftState });
             }}
           />
+        )}
+        {modal === "tutorial" && (
+          <TutorialModal lang={lang} onClose={closeModal} />
         )}
       </div>
     </main>

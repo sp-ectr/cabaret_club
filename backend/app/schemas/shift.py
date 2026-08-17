@@ -1,12 +1,16 @@
 from typing import Literal, Annotated, Union
 from pydantic import BaseModel, Field
-from app.schemas.game import PlayerDTO, HostessStateDTO, UpgradesDTO
-
-StatType = Literal["talk", "charisma", "service"]
-GuestType = Literal["POOR", "MID", "RICH", "BOMZH"]
-TableStatus = Literal["WAITING", "SERVING", "BOMZH_BLOCKED", "COOLDOWN"]
-MatchFeedback = Literal["PERFECT", "GOOD", "POOR"]
-GuestLeaveReason = Literal["SERVED", "ANGRY_LEAVE", "BOMZH_GONE"]
+from app.schemas.common import (
+    PlayerDTO,
+    HostessStateDTO,
+    StatType,
+    GuestType,
+    TableStatus,
+    MatchFeedback,
+    GuestLeaveReason,
+    ClubTierType,
+    HostessIdType
+)
 
 class GuestDTO(BaseModel):
     id: str
@@ -28,7 +32,7 @@ class TableDTO(BaseModel):
     served_yen: int = 0
 
 class ShiftStartRequest(BaseModel):
-    selected_hostess_ids: list[Literal["YUKI", "MIRA", "SAKURA", "NIKA", "LUNA"]]
+    selected_hostess_ids: list[HostessIdType]
     has_bouncer: bool = False
 
 class ShiftStartResponse(BaseModel):
@@ -47,14 +51,14 @@ class GuestSpawnedAction(BaseModel):
 class AssignAction(BaseModel):
     type: Literal["ASSIGN"] = "ASSIGN"
     table_id: Literal[1, 2, 3]
-    hostess_id: Literal["YUKI", "MIRA", "SAKURA", "NIKA", "LUNA"]
+    hostess_id: HostessIdType
     match_multiplier: float
     feedback: MatchFeedback
 
 class PlacateBomzhAction(BaseModel):
     type: Literal["PLACATE_BOMZH"] = "PLACATE_BOMZH"
     table_id: Literal[1, 2, 3]
-    hostess_id: Literal["YUKI", "MIRA", "SAKURA", "NIKA", "LUNA"]
+    hostess_id: HostessIdType
 
 class GuestLeftAction(BaseModel):
     type: Literal["GUEST_LEFT"] = "GUEST_LEFT"
@@ -89,7 +93,7 @@ class ShiftStateResponse(BaseModel):
 
 class ShiftReportDTO(BaseModel):
     shift_id: str
-    club_tier: Literal[1, 2, 3]
+    club_tier: ClubTierType
     started_at: int
     ended_at: int
     guests_served: int
@@ -115,11 +119,3 @@ class ShiftCompleteResponse(BaseModel):
     hostesses: list[HostessStateDTO]
     victory: bool
     defeat: bool
-
-class GameInitResponse(BaseModel):
-    player: PlayerDTO
-    hostesses: list[HostessStateDTO]
-    upgrades: UpgradesDTO
-    server_time: int
-    active_shift: ShiftStateResponse | None = None
-    auto_closed_shift: ShiftReportDTO | None = None
