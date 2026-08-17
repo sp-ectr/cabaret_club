@@ -1,3 +1,6 @@
+// src/components/shift/TableSlot.tsx
+// Адаптивная карточка стола: резиновая высота под любые экраны мобилок.
+
 import type {
   GameTable,
   Guest,
@@ -50,25 +53,25 @@ const PATIENCE_MAX = 10;
 const SERVING_MAX = 30;
 
 function patienceColor(ratio: number): string {
-  if (ratio > 0.6) return "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)]";
-  if (ratio > 0.3) return "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.9)]";
-  return "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,1)] animate-pulse";
+  if (ratio > 0.6) return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
+  if (ratio > 0.3) return "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]";
+  return "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)] animate-pulse";
 }
 
 function guestGlow(type: GuestType): string {
-  if (type === "RICH") return "shadow-[0_0_20px_rgba(244,63,94,0.7)] border-rose-500";
-  if (type === "MID") return "shadow-[0_0_16px_rgba(168,85,247,0.6)] border-purple-500";
-  return "shadow-[0_0_12px_rgba(113,113,122,0.6)] border-zinc-500";
+  if (type === "RICH") return "shadow-[0_0_12px_rgba(244,63,94,0.6)] border-rose-500";
+  if (type === "MID") return "shadow-[0_0_10px_rgba(168,85,247,0.5)] border-purple-500";
+  return "shadow-[0_0_8px_rgba(113,113,122,0.5)] border-zinc-500";
 }
 
 function badgeClasses(fb: MatchFeedback): string {
   if (fb === "PERFECT") {
-    return "bg-amber-400 text-black border-2 border-amber-200 shadow-[0_0_30px_rgba(251,191,36,1)]";
+    return "bg-amber-400 text-black border-2 border-amber-200 shadow-[0_0_20px_rgba(251,191,36,0.95)]";
   }
   if (fb === "GOOD") {
-    return "bg-teal-600 text-white border-2 border-teal-300 shadow-[0_0_20px_rgba(20,184,166,0.9)]";
+    return "bg-teal-600 text-white border border-teal-300 shadow-[0_0_12px_rgba(20,184,166,0.8)]";
   }
-  return "bg-rose-700 text-white border-2 border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.9)]";
+  return "bg-rose-700 text-white border border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.8)]";
 }
 
 function guestAvatarSrc(guest: Guest): string {
@@ -102,44 +105,44 @@ export function TableSlot({
   const { status, guest, id } = table;
 
   const auraBorder = sheikhAura
-    ? "border-2 border-amber-400 shadow-[0_0_40px_rgba(251,191,36,0.65)] bg-gradient-to-b from-amber-950/60 via-black/90 to-black/90"
-    : "border border-zinc-800/90 bg-[#0c0812]/95 shadow-[0_0_25px_rgba(0,0,0,0.85)]";
+    ? "border-2 border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.6)] bg-gradient-to-b from-amber-950/50 via-black/90 to-black/90"
+    : "border border-zinc-800/90 bg-[#0c0812]/95 shadow-[0_0_15px_rgba(0,0,0,0.8)]";
 
-  // ── 1. COOLDOWN (Перезарядка стола) ────────────────────────────────────
+  // ── 1. COOLDOWN ────────────────────────────────────────────────────────
   if (status === "COOLDOWN") {
     return (
-      <div className="relative flex flex-col items-center justify-center rounded-xs border border-zinc-800/40 bg-black/40 opacity-40 p-4 select-none h-[250px] sm:h-[280px] gap-3">
+      <div className="relative flex flex-col items-center justify-center rounded-xs border border-zinc-800/40 bg-black/40 opacity-40 p-2 select-none h-full gap-1">
         {label != null && <LabelBadge text={label} />}
-        <span className="text-sm sm:text-base font-mono font-bold tracking-widest text-zinc-500 uppercase">
+        <span className="text-[11px] sm:text-xs font-mono font-bold tracking-widest text-zinc-500 uppercase">
           {t.shiftScreen.tablePrefix} {id}
         </span>
-        <span className="text-sm sm:text-base font-mono font-bold text-zinc-400">
+        <span className="text-[11px] sm:text-xs font-mono font-bold text-zinc-400">
           ⏳ {table.remainingSec}{t.shiftScreen.secondsSuffix}
         </span>
       </div>
     );
   }
 
-  // ── 2. BOMZH_BLOCKED (Диверсия Маджимы) ────────────────────────────────
+  // ── 2. BOMZH_BLOCKED ───────────────────────────────────────────────────
   if (status === "BOMZH_BLOCKED") {
     const canPlacate = selectedHostessId !== null;
     return (
       <div
-        className={`relative flex flex-col items-center justify-between rounded-xs border-2 bg-black/90 p-3 sm:p-4 select-none transition-all h-[250px] sm:h-[280px]
-          border-rose-600 shadow-[0_0_35px_rgba(225,29,72,0.6)]
-          ${sheikhAura ? "!border-amber-400 !shadow-[0_0_40px_rgba(251,191,36,0.7)]" : ""}`}
+        className={`relative flex flex-col items-center justify-between rounded-xs border-2 bg-black/90 p-2 sm:p-2.5 select-none transition-all h-full
+          border-rose-600 shadow-[0_0_25px_rgba(225,29,72,0.5)]
+          ${sheikhAura ? "!border-amber-400 !shadow-[0_0_30px_rgba(251,191,36,0.6)]" : ""}`}
       >
         {label != null && <LabelBadge text={label} />}
         
-        {/* Огромный арт Маджимы-Бомжа */}
-        <div className="relative mt-2">
+        {/* Аватарка Маджимы */}
+        <div className="relative mt-1">
           <img
             src={bomzhAvatar}
             alt="BOMZH"
             draggable={false}
-            className="w-20 h-20 sm:w-24 sm:h-24 rounded-xs border-2 border-rose-500 object-cover shadow-[0_0_20px_rgba(244,63,94,0.7)]"
+            className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xs border-2 border-rose-500 object-cover shadow-[0_0_12px_rgba(244,63,94,0.6)]"
           />
-          <span className="absolute -bottom-2 -right-2 bg-rose-950 border border-rose-500 text-xs font-mono font-black text-rose-200 px-2 py-0.5 shadow-[0_0_8px_rgba(0,0,0,0.8)]">
+          <span className="absolute -bottom-1.5 -right-1.5 bg-rose-950 border border-rose-500 text-[9px] sm:text-[10px] font-mono font-black text-rose-200 px-1 py-0.2">
             {table.remainingSec}{t.shiftScreen.secondsSuffix}
           </span>
         </div>
@@ -151,9 +154,9 @@ export function TableSlot({
             if (selectedHostessId !== null) onPlacate(id, selectedHostessId);
           }}
           title={!canPlacate ? t.shiftScreen.chooseHostessHint : undefined}
-          className={`w-full min-h-[38px] sm:min-h-[42px] px-3 py-2 rounded-xs text-xs font-mono font-black tracking-wider uppercase border transition-all active:scale-95
+          className={`w-full min-h-[28px] sm:min-h-[32px] px-2 py-1 rounded-xs text-[9px] sm:text-[10px] font-mono font-black tracking-wider uppercase border transition-all active:scale-95
             ${canPlacate
-              ? "bg-gradient-to-r from-rose-950 to-rose-900 border-rose-500 text-rose-100 hover:border-rose-400 hover:from-rose-900 hover:to-rose-800 cursor-pointer shadow-[0_0_20px_rgba(244,63,94,0.6)] animate-pulse"
+              ? "bg-gradient-to-r from-rose-950 to-rose-900 border-rose-500 text-rose-100 hover:border-rose-400 cursor-pointer shadow-[0_0_12px_rgba(244,63,94,0.5)] animate-pulse"
               : "bg-zinc-900/70 border-zinc-800 text-zinc-600 cursor-not-allowed"}`}
         >
           {t.shiftScreen.placateBomzh}
@@ -162,16 +165,16 @@ export function TableSlot({
     );
   }
 
-  // ── 3. WAITING (Гость ждет назначения) ─────────────────────────────────
+  // ── 3. WAITING ─────────────────────────────────────────────────────────
   if (status === "WAITING" && guest !== null) {
     const patienceRatio = guest.patienceSec > 0 ? table.remainingSec / PATIENCE_MAX : 0;
     const canAssign = selectedHostessId !== null;
 
     return (
       <div
-        className={`relative flex flex-col items-center justify-between rounded-xs p-3 sm:p-4 select-none transition-all h-[250px] sm:h-[280px]
+        className={`relative flex flex-col items-center justify-between rounded-xs p-2 sm:p-2.5 select-none transition-all h-full
           ${canAssign 
-            ? "animate-cabaretPulse border-2 border-rose-400 bg-rose-950/40 cursor-pointer shadow-[0_0_30px_rgba(244,63,94,0.6)]" 
+            ? "animate-cabaretPulse border-2 border-rose-400 bg-rose-950/30 cursor-pointer shadow-[0_0_20px_rgba(244,63,94,0.5)]" 
             : auraBorder}`}
         onClick={() => {
           if (selectedHostessId !== null) onAssign(id, selectedHostessId);
@@ -179,22 +182,22 @@ export function TableSlot({
       >
         {label != null && <LabelBadge text={label} />}
 
-        {/* Огромный аватар гостя */}
-        <div className="flex flex-col items-center gap-2 mt-1">
+        {/* Аватар гостя */}
+        <div className="flex flex-col items-center gap-1 mt-0.5">
           <img
             src={guestAvatarSrc(guest)}
             alt={guest.type}
             draggable={false}
-            className={`w-20 h-20 sm:w-24 sm:h-24 rounded-xs border-2 object-cover ${guestGlow(guest.type)}`}
+            className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xs border-2 object-cover ${guestGlow(guest.type)}`}
           />
 
           {/* Видимые статы */}
           {guest.visibleStats !== null && (
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               {guest.visibleStats.map((stat) => (
                 <span
                   key={stat}
-                  className="text-[10px] sm:text-[11px] font-mono font-bold tracking-wider text-zinc-100 bg-black/90 border border-zinc-700 px-2 py-0.5 rounded-none shadow-[0_0_10px_rgba(0,0,0,0.9)]"
+                  className="text-[8px] sm:text-[9px] font-mono font-bold tracking-wider text-zinc-200 bg-black/90 border border-zinc-700 px-1.5 py-0.2 rounded-none"
                 >
                   {STAT_EMOJI[stat]} {t.hostessModal.stats[stat]}
                 </span>
@@ -203,9 +206,9 @@ export function TableSlot({
           )}
         </div>
 
-        {/* Полоса терпения + Кнопка */}
-        <div className="w-full flex flex-col gap-1.5 mt-auto">
-          <div className="w-full h-2 sm:h-2.5 bg-zinc-900 border border-zinc-800 rounded-none overflow-hidden">
+        {/* Полоса терпения + Кнопка посадки */}
+        <div className="w-full flex flex-col gap-1 mt-auto">
+          <div className="w-full h-1.5 sm:h-2 bg-zinc-900 border border-zinc-800 rounded-none overflow-hidden">
             <div
               className={`h-full transition-all duration-300 ${patienceColor(patienceRatio)}`}
               style={{ width: pct(patienceRatio) }}
@@ -213,11 +216,11 @@ export function TableSlot({
           </div>
 
           {canAssign ? (
-            <div className="w-full py-1.5 bg-rose-950/80 border border-rose-400 text-xs font-mono font-black tracking-[0.25em] text-rose-100 text-center uppercase drop-shadow-[0_0_10px_rgba(244,63,94,1)] animate-pulse">
+            <div className="w-full py-1 bg-rose-950/80 border border-rose-400 text-[9px] sm:text-[10px] font-mono font-black tracking-[0.2em] text-rose-100 text-center uppercase drop-shadow-[0_0_8px_rgba(244,63,94,0.9)] animate-pulse">
               {t.shiftScreen.seatHostess}
             </div>
           ) : (
-            <span className="text-[10px] font-mono font-bold text-zinc-400 text-center uppercase tracking-widest">
+            <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-400 text-center uppercase tracking-widest leading-none">
               ⏳ {table.remainingSec}{t.shiftScreen.secondsSuffix}
             </span>
           )}
@@ -226,7 +229,7 @@ export function TableSlot({
     );
   }
 
-  // ── 4. SERVING (Идет обслуживание) ─────────────────────────────────────
+  // ── 4. SERVING ─────────────────────────────────────────────────────────
   if (status === "SERVING" && guest !== null) {
     const hostessSrc = table.assignedHostessId !== null
       ? HOSTESS_AVATARS[table.assignedHostessId]
@@ -235,47 +238,47 @@ export function TableSlot({
 
     return (
       <div
-        className={`relative flex flex-col justify-between rounded-xs p-3 sm:p-4 select-none transition-all h-[250px] sm:h-[280px] ${auraBorder}`}
+        className={`relative flex flex-col justify-between rounded-xs p-2 sm:p-2.5 select-none transition-all h-full ${auraBorder}`}
       >
         {label != null && <LabelBadge text={label} />}
 
-        {/* Крупная пара Гость + Хостес */}
-        <div className="flex items-center justify-between w-full mt-1 px-1 sm:px-2">
+        {/* Пара Гость + Хостес */}
+        <div className="flex items-center justify-between w-full mt-0.5 px-0.5">
           <img
             src={guestAvatarSrc(guest)}
             alt={guest.type}
             draggable={false}
-            className="w-16 h-16 sm:w-18 sm:h-18 rounded-xs border-2 border-zinc-600 object-cover shadow-[0_0_12px_rgba(0,0,0,0.9)]"
+            className="w-10 h-10 sm:w-13 sm:h-13 md:w-15 md:h-15 rounded-xs border-2 border-zinc-600 object-cover shadow-[0_0_10px_rgba(0,0,0,0.8)]"
           />
 
-          <span className="text-base sm:text-lg font-mono font-bold text-rose-400 animate-pulse">⇄</span>
+          <span className="text-[10px] sm:text-xs font-mono font-bold text-rose-400 animate-pulse">⇄</span>
 
           {hostessSrc !== undefined && (
             <img
               src={hostessSrc}
               alt="Hostess"
               draggable={false}
-              className="w-16 h-16 sm:w-18 sm:h-18 rounded-xs border-2 border-rose-500 object-cover shadow-[0_0_15px_rgba(244,63,94,0.6)]"
+              className="w-10 h-10 sm:w-13 sm:h-13 md:w-15 md:h-15 rounded-xs border-2 border-rose-500 object-cover shadow-[0_0_12px_rgba(244,63,94,0.5)]"
             />
           )}
         </div>
 
-        {/* Крупный счетчик стриминга йен */}
-        <div className="text-center my-auto py-1">
-          <span className="text-base sm:text-xl md:text-2xl font-mono font-black text-amber-300 tracking-wider drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]">
+        {/* Стриминг выручки */}
+        <div className="text-center my-auto py-0.5">
+          <span className="text-xs sm:text-base md:text-xl font-mono font-black text-amber-300 tracking-wider drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">
             ¥ {table.servedYen.toLocaleString()}
           </span>
         </div>
 
-        {/* Полоса прогресса обслуживания */}
-        <div className="w-full flex flex-col gap-1">
-          <div className="w-full h-2.5 bg-zinc-900 border border-zinc-800 rounded-none overflow-hidden">
+        {/* Полоса прогресса */}
+        <div className="w-full flex flex-col gap-0.5">
+          <div className="w-full h-1.5 sm:h-2 bg-zinc-900 border border-zinc-800 rounded-none overflow-hidden">
             <div
-              className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.9)] transition-all duration-300"
+              className="h-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)] transition-all duration-300"
               style={{ width: pct(servingRatio) }}
             />
           </div>
-          <span className="text-[10px] font-mono font-bold text-zinc-400 text-right">
+          <span className="text-[8px] sm:text-[9px] font-mono font-bold text-zinc-400 text-right leading-none">
             {table.remainingSec}{t.shiftScreen.secondsSuffix}
           </span>
         </div>
@@ -284,7 +287,7 @@ export function TableSlot({
         {table.currentMatchFeedback !== null && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
             <span
-              className={`px-4 py-2 text-xs sm:text-sm font-mono font-black tracking-widest uppercase rounded-none drop-shadow-[0_0_20px_rgba(0,0,0,0.95)] animate-bounce
+              className={`px-2.5 py-1 text-[9px] sm:text-[11px] font-mono font-black tracking-widest uppercase rounded-none drop-shadow-[0_0_15px_rgba(0,0,0,0.95)] animate-bounce
                 ${badgeClasses(table.currentMatchFeedback)}`}
             >
               {table.currentMatchFeedback === "PERFECT" ? "★ PERFECT ★" : table.currentMatchFeedback}
@@ -300,7 +303,7 @@ export function TableSlot({
 
 function LabelBadge({ text }: { text: string }) {
   return (
-    <span className="absolute top-1.5 left-2 text-[9px] sm:text-[10px] font-mono font-bold tracking-widest text-zinc-400 uppercase bg-black/80 px-2 py-0.5 border border-zinc-800 z-10">
+    <span className="absolute top-1 left-1 text-[7px] sm:text-[8px] font-mono font-bold tracking-widest text-zinc-400 uppercase bg-black/80 px-1 py-0.2 border border-zinc-800 z-10">
       {text}
     </span>
   );

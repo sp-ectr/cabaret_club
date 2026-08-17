@@ -18,9 +18,9 @@ const HOSTESS_IMAGES: Record<HostessId, string> = {
 };
 
 const STATUS_CONFIG: Record<HostessStatus, { text: string; bar: string }> = {
-  READY: { text: "text-emerald-400", bar: "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" },
-  TIRED: { text: "text-amber-400", bar: "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.8)]" },
-  BURNOUT: { text: "text-rose-500", bar: "bg-rose-600 shadow-[0_0_6px_rgba(244,63,94,0.9)]" },
+  READY: { text: "text-emerald-400", bar: "bg-emerald-500" },
+  TIRED: { text: "text-amber-400", bar: "bg-amber-500" },
+  BURNOUT: { text: "text-rose-500", bar: "bg-rose-600" },
 };
 
 interface HostessPickerProps {
@@ -41,7 +41,7 @@ export function HostessPicker({
   const t = DICTIONARY[lang];
 
   return (
-    <div className="w-full flex items-center justify-center gap-2.5 sm:gap-4 px-3 py-2 bg-black/85 border-t border-zinc-800/90 backdrop-blur-md select-none overflow-x-auto">
+    <div className="w-full flex items-center justify-center gap-1.5 sm:gap-2.5 px-2 py-1 bg-black/85 border-t border-zinc-800/80 backdrop-blur-md select-none shrink-0">
       {activeHostesses.map((runtimeHostess) => {
         const staticData = INITIAL_HOSTESSES.find((h) => h.id === runtimeHostess.id);
         if (!staticData) return null;
@@ -57,7 +57,7 @@ export function HostessPicker({
           : status === "READY"
             ? t.hostessModal.ready
             : status === "TIRED"
-              ? `${t.hostessModal.tired} (-20%)`
+              ? `${t.hostessModal.tired} (${t.hostessModal.tiredHint})`
               : t.hostessModal.burnout;
 
         return (
@@ -68,80 +68,60 @@ export function HostessPicker({
               onSelectHostess(isSelected ? null : runtimeHostess.id);
             }}
             className={`
-              relative flex items-center gap-3 p-2 sm:p-2.5 rounded-xs border transition-all duration-200 min-w-[160px] sm:min-w-[185px]
+              relative flex items-center gap-1.5 px-1.5 py-1 rounded-xs border transition-all duration-200 min-w-[105px] sm:min-w-[130px]
               ${
                 isSelected
-                  ? "border-2 border-rose-400 bg-rose-950/50 shadow-[0_0_20px_rgba(244,63,94,0.6)] animate-cabaretPulse cursor-pointer scale-102"
+                  ? "border-rose-400 bg-rose-950/40 shadow-[0_0_12px_rgba(244,63,94,0.4)] animate-cabaretPulse cursor-pointer scale-102"
                   : isSelectable
-                    ? "border-zinc-800 bg-[#0d0914] hover:border-zinc-600 hover:bg-[#140e1f] cursor-pointer shadow-[0_0_10px_rgba(0,0,0,0.8)]"
-                    : "border-zinc-900 bg-black/50 opacity-40 cursor-not-allowed"
+                    ? "border-zinc-800 bg-black/60 hover:border-zinc-700 cursor-pointer"
+                    : "border-zinc-900 bg-black/40 opacity-40 cursor-not-allowed"
               }
             `}
           >
-            {/* Крупный портрет хостес */}
+            {/* Аватарка */}
             <div className="relative shrink-0">
               <img
                 src={HOSTESS_IMAGES[runtimeHostess.id]}
                 alt={staticData.name}
                 draggable={false}
-                className="w-13 h-13 sm:w-15 sm:h-15 object-cover rounded-xs border-2 border-zinc-700/80 shadow-[0_0_10px_rgba(0,0,0,0.8)]"
+                className="w-7 h-7 sm:w-8 sm:h-8 object-cover rounded-xs border border-zinc-700"
               />
               {isSelected && (
-                <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-rose-500 rounded-full border-2 border-white shadow-[0_0_10px_rgba(244,63,94,1)] animate-ping" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full shadow-[0_0_6px_rgba(244,63,94,1)]" />
               )}
             </div>
 
-            {/* Информационный блок */}
-            <div className="flex flex-col flex-1 min-w-0 leading-tight">
-              
-              {/* Верхняя строка: Имя + Статус */}
-              <div className="flex items-center justify-between gap-1 mb-1.5">
-                <span className="text-xs sm:text-sm font-black font-sans text-zinc-100 uppercase tracking-wider truncate">
+            {/* Инфо-блок */}
+            <div className="flex flex-col flex-1 min-w-0 leading-none">
+              <div className="flex items-center justify-between gap-1 mb-0.5">
+                <span className="text-[9px] sm:text-[10px] font-bold font-sans text-zinc-100 uppercase truncate">
                   {staticData.name}
                 </span>
-                <span className={`text-[8px] sm:text-[9px] font-mono font-bold tracking-widest uppercase ${statusUi.text}`}>
+                <span className={`text-[6px] sm:text-[7px] font-mono font-bold tracking-wider ${statusUi.text}`}>
                   {statusLabel}
                 </span>
               </div>
 
-              {/* Крупные плашки характеристик */}
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <div className="flex items-center gap-0.5 bg-black/80 border border-zinc-700/80 px-1 py-0.5 rounded-none">
-                  <span className="text-[9px]">💬</span>
-                  <span className="text-[10px] sm:text-xs font-mono font-black text-zinc-200">
-                    {staticData.stats.talk}
-                  </span>
-                </div>
-                <div className="flex items-center gap-0.5 bg-black/80 border border-zinc-700/80 px-1 py-0.5 rounded-none">
-                  <span className="text-[9px]">🍸</span>
-                  <span className="text-[10px] sm:text-xs font-mono font-black text-zinc-200">
-                    {staticData.stats.charisma}
-                  </span>
-                </div>
-                <div className="flex items-center gap-0.5 bg-black/80 border border-zinc-700/80 px-1 py-0.5 rounded-none">
-                  <span className="text-[9px]">💖</span>
-                  <span className="text-[10px] sm:text-xs font-mono font-black text-zinc-200">
-                    {staticData.stats.service}
-                  </span>
-                </div>
+              {/* Мини-статы */}
+              <div className="flex items-center gap-1 text-[7px] sm:text-[8px] font-mono text-zinc-400 mb-0.5">
+                <span>💬{staticData.stats.talk}</span>
+                <span>🍸{staticData.stats.charisma}</span>
+                <span>💖{staticData.stats.service}</span>
               </div>
 
-              {/* Увеличенная полоска Задора */}
-              <div className="w-full flex flex-col gap-0.5">
-                <div className="w-full h-1.5 sm:h-2 bg-zinc-900 border border-zinc-800 rounded-none overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-300 ${statusUi.bar}`}
-                    style={{ width: `${Math.max(0, Math.min(100, runtimeHostess.stamina))}%` }}
-                  />
-                </div>
+              {/* Полоска Задора */}
+              <div className="w-full h-1 bg-zinc-800 rounded-none overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${statusUi.bar}`}
+                  style={{ width: `${Math.max(0, Math.min(100, runtimeHostess.stamina))}%` }}
+                />
               </div>
-
             </div>
 
-            {/* Оверлей занятости [ ЗАНЯТА ] */}
+            {/* Оверлей занятости */}
             {isBusy && (
-              <div className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-xs backdrop-blur-[1px] z-10 border border-zinc-700/50">
-                <span className="text-[10px] sm:text-xs font-mono font-black tracking-[0.2em] text-zinc-300 uppercase drop-shadow-[0_0_8px_rgba(0,0,0,1)]">
+              <div className="absolute inset-0 bg-black/75 flex items-center justify-center rounded-xs backdrop-blur-[0.5px]">
+                <span className="text-[7px] sm:text-[8px] font-mono font-bold tracking-widest text-zinc-400 uppercase">
                   {t.shiftScreen.busyHostess}
                 </span>
               </div>
