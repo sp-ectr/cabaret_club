@@ -48,7 +48,7 @@ const MOCK_USER = {
 export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
   const t = DICTIONARY[lang];
 
-  const [activeTab, setActiveTab] = useState<TabType | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType | null>("club");
   const [modal, setModal] = useState<ModalKind>(null);
   const [game, setGame] = useState<InitGameResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -104,7 +104,6 @@ export function HomeScreen({ lang, onExit, onShiftLaunched }: HomeScreenProps) {
       localStorage.setItem("cabaret_seen_tutorial", "true");
     }
     setModal(null);
-    setActiveTab(null);
   };
 
   const handleResetGame = async () => {
